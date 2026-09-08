@@ -1,0 +1,32 @@
+RANDOM FOREST MODEL RESULTS
+==================================================
+
+Training Set (2010-2013):
+  R²:    0.9830
+  MAE:   15.03 W/m²
+  RMSE:  40.89 W/m²
+  nRMSE: 4.13%
+
+Test Set (2014):
+  R²:    0.9695
+  MAE:   21.00 W/m²
+  RMSE:  55.14 W/m²
+  nRMSE: 5.56%
+
+5-Fold Cross-Validation R²: 0.9652 ± 0.0078
+CV scores: [0.96531571 0.97475601 0.97264068 0.95385912 0.95952705]
+
+Feature Importance:
+  Hour_cos                  0.5190
+  Hour                      0.2061
+  Temperature               0.1189
+  Hour_sin                  0.0642
+  Relative Humidity         0.0380
+  DayOfYear                 0.0102
+  Wind Speed                0.0091
+  Month_cos                 0.0072
+  Pressure                  0.0068
+  Wind Direction            0.0062
+  Dew Point                 0.0060
+  Month                     0.0051
+  Month_sin                 0.0031
