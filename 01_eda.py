@@ -1,6 +1,5 @@
 """
 =============================================================
-Person 1: Data Engineer — Exploratory Data Analysis (EDA)
 DOP: Forecasting of Renewable Resources Using AI
 BITS Hyderabad | EEE Dept | Under Arup Ratan Sir
 =============================================================
@@ -19,7 +18,7 @@ matplotlib.use('Agg')  # Non-interactive backend
 import seaborn as sns
 import os
 
-# ── Style Setup ──────────────────────────────────────────────
+#Style Setup
 plt.rcParams.update({
     'figure.dpi': 150,
     'savefig.dpi': 150,
@@ -33,14 +32,14 @@ sns.set_style("whitegrid")
 # Create output directory
 os.makedirs('plots', exist_ok=True)
 
-# ── 1. Load Data ─────────────────────────────────────────────
+#1. Load Data
 print("Loading data...")
 df = pd.read_excel('BA_Combined.xlsx', sheet_name='Sheet1')
 print(f"Dataset: {df.shape[0]} rows × {df.shape[1]} columns")
 print(f"Date range: {df['Year'].min()}-{df['Year'].max()}")
 print(f"Missing values: {df.isnull().sum().sum()}")
 
-# ── 2. Feature Engineering ───────────────────────────────────
+# 2. Feature Engineering
 # Create datetime column
 df['DateTime'] = pd.to_datetime(
     df[['Year', 'Month', 'Day', 'Hour']].assign(Minute=30),
@@ -69,7 +68,7 @@ df['IsDaytime'] = (df['GHI'] > 0).astype(int)
 df.to_csv('solar_data_cleaned.csv', index=False)
 print("Saved cleaned data to solar_data_cleaned.csv")
 
-# ── 3. Print Summary Statistics ──────────────────────────────
+#3. Print Summary Statistics 
 print("\n" + "="*60)
 print("DATASET SUMMARY")
 print("="*60)
@@ -78,7 +77,7 @@ print("-"*60)
 for col in ['GHI', 'DNI', 'DHI', 'Temperature', 'Pressure', 'Relative Humidity', 'Wind Speed']:
     print(f"{col:<20} {df[col].mean():>10.2f} {df[col].std():>10.2f} {df[col].min():>10.2f} {df[col].max():>10.2f}")
 
-# ── PLOT 1: GHI Distribution ─────────────────────────────────
+#PLOT 1: GHI Distribution
 fig, axes = plt.subplots(1, 2, figsize=(14, 5))
 
 # Histogram of GHI
@@ -103,7 +102,7 @@ plt.savefig('plots/01_ghi_distribution.png', bbox_inches='tight')
 plt.close()
 print("Saved: plots/01_ghi_distribution.png")
 
-# ── PLOT 2: Hourly Average GHI Profile ───────────────────────
+#PLOT 2: Hourly Average GHI Profile
 fig, ax = plt.subplots(figsize=(12, 5))
 hourly_avg = df.groupby('Hour')['GHI'].mean()
 ax.fill_between(hourly_avg.index, hourly_avg.values, alpha=0.3, color='#FF6B35')
@@ -128,7 +127,7 @@ plt.savefig('plots/02_hourly_ghi_profile.png', bbox_inches='tight')
 plt.close()
 print("Saved: plots/02_hourly_ghi_profile.png")
 
-# ── PLOT 3: Monthly Average GHI ──────────────────────────────
+# PLOT 3: Monthly Average GHI 
 fig, ax = plt.subplots(figsize=(12, 5))
 monthly_avg = df.groupby('Month')['GHI'].mean()
 months_labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
@@ -162,7 +161,7 @@ plt.savefig('plots/03_monthly_ghi.png', bbox_inches='tight')
 plt.close()
 print("Saved: plots/03_monthly_ghi.png")
 
-# ── PLOT 4: Correlation Heatmap ──────────────────────────────
+#PLOT 4: Correlation Heatmap
 fig, ax = plt.subplots(figsize=(10, 8))
 corr_cols = ['GHI', 'DNI', 'DHI', 'Temperature', 'Dew Point',
              'Pressure', 'Relative Humidity', 'Wind Direction', 'Wind Speed', 'Hour', 'Month']
@@ -177,7 +176,7 @@ plt.savefig('plots/04_correlation_heatmap.png', bbox_inches='tight')
 plt.close()
 print("Saved: plots/04_correlation_heatmap.png")
 
-# ── PLOT 5: Seasonal GHI Comparison ─────────────────────────
+#PLOT 5: Seasonal GHI Comparison
 fig, ax = plt.subplots(figsize=(12, 5))
 season_order = ['Winter', 'Summer', 'Monsoon', 'Post-Monsoon']
 season_colors = {'Winter': '#4A90D9', 'Summer': '#FF6B35', 'Monsoon': '#2ECC71', 'Post-Monsoon': '#E67E22'}
@@ -196,7 +195,7 @@ plt.savefig('plots/05_seasonal_ghi_profiles.png', bbox_inches='tight')
 plt.close()
 print("Saved: plots/05_seasonal_ghi_profiles.png")
 
-# ── PLOT 6: Yearly Trend ─────────────────────────────────────
+# PLOT 6: Yearly Trend
 fig, ax = plt.subplots(figsize=(12, 5))
 yearly_monthly = df.groupby(['Year', 'Month'])['GHI'].mean().unstack(level=0)
 yearly_monthly.plot(ax=ax, linewidth=2, marker='o', markersize=4)
@@ -211,7 +210,7 @@ plt.savefig('plots/06_yearly_trend.png', bbox_inches='tight')
 plt.close()
 print("Saved: plots/06_yearly_trend.png")
 
-# ── PLOT 7: GHI vs Temperature Scatter ───────────────────────
+#PLOT 7: GHI vs Temperature Scatter
 fig, ax = plt.subplots(figsize=(10, 6))
 daytime_df = df[df['GHI'] > 0].sample(n=5000, random_state=42)
 scatter = ax.scatter(daytime_df['Temperature'], daytime_df['GHI'],
@@ -226,7 +225,7 @@ plt.savefig('plots/07_ghi_vs_temperature.png', bbox_inches='tight')
 plt.close()
 print("Saved: plots/07_ghi_vs_temperature.png")
 
-# ── PLOT 8: Irradiance Components (DHI, DNI, GHI) ───────────
+#PLOT 8: Irradiance Components (DHI, DNI, GHI)
 fig, ax = plt.subplots(figsize=(12, 5))
 hourly_components = df.groupby('Hour')[['GHI', 'DNI', 'DHI']].mean()
 ax.fill_between(hourly_components.index, hourly_components['GHI'], alpha=0.2, color='#FF6B35')

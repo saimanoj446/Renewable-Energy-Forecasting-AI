@@ -1,0 +1,34 @@
+PHASE 2: MODEL COMPARISON RESULTS
+DOP: Forecasting of Renewable Resources Using AI
+BITS Pilani Hyderabad | EEE Dept
+=================================================================
+
+Model                        R2        MAE       RMSE     nRMSE          CV R2
+-----------------------------------------------------------------
+Random Forest            0.9846     12.75      39.21      3.96%  0.9819+/-0.0009
+Gradient Boosting        0.9841     14.90      39.88      4.02%  0.9813+/-0.0008
+XGBoost                  0.9842     13.88      39.70      4.01%  0.9815+/-0.0011
+SVR                      0.9839     16.15      40.04      4.04%  0.9818+/-0.0003
+
+Best Model: Random Forest
+
+Features used (Phase 2):
+  - Hour
+  - Month
+  - DayOfYear
+  - Temperature
+  - Dew Point
+  - Pressure
+  - Relative Humidity
+  - Wind Speed
+  - Wind Direction
+  - Hour_sin
+  - Hour_cos
+  - Month_sin
+  - Month_cos
+  - GHI_lag1
+  - GHI_lag2
+  - GHI_lag3
+  - GHI_roll3
+  - GHI_roll6
+  - Temp_lag1

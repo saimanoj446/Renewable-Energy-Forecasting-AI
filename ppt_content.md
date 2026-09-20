@@ -8,7 +8,7 @@
 
 **Title:** Forecasting of Renewable Resources Using AI
 
-**Subtitle:** Phase 1 — Solar Irradiance Prediction using Random Forest
+**Subtitle:** Phase 2 — Model Comparison Study: RF vs XGBoost vs Gradient Boosting vs SVR
 
 **Team:** [Your 3 names]
 
@@ -222,67 +222,115 @@ This helps Random Forest understand that 11 PM and midnight are close in time.
 
 ---
 
-## Slide 12: Semester Roadmap
+## Slide 12: Phase 2 — Feature Engineering Advances
+
+**What's New in Phase 2 (Beyond Phase 1)?**
+
+| Feature Type | Features Added | Why It Helps |
+|---|---|---|
+| **Lag-1 GHI** | GHI 1 hour ago | Solar radiation is highly autocorrelated — yesterday's hour predicts today's |
+| **Lag-2, Lag-3 GHI** | GHI 2h and 3h ago | Captures short-term weather trends |
+| **3-hour rolling avg** | Mean of last 3h GHI | Smooths noise, encodes recent trend direction |
+| **6-hour rolling avg** | Mean of last 6h GHI | Captures half-day weather patterns |
+| **Temp Lag-1** | Temperature 1h ago | Thermal inertia — temperature changes gradually |
+
+**Result:** Feature count grew from **13 → 19**. Lag features made GHI_lag1 the **top predictor** in all tree models (importance > 0.40).
+
+**Time-Series Cross-Validation (TimeSeriesSplit)**
+- Unlike random k-fold, always trains on **past data only** and tests on **future data**
+- 5 chronological folds on the 2010–2013 training set
+- Ensures CV scores truly reflect real-world deployment performance
+
+---
+
+## Slide 13: Phase 2 — Model Comparison Results
+
+**Models Trained & Tuned:**
+| Model | Tuning Method | Key Hyperparameters |
+|---|---|---|
+| Random Forest | Fixed (Phase 1) | 200 trees, depth=20 |
+| Gradient Boosting | RandomizedSearchCV (15 trials) | LR, depth, n_estimators, subsample |
+| XGBoost | RandomizedSearchCV (15 trials) | LR, depth, colsample, reg_alpha |
+| SVR | Fixed (RBF kernel) | C=500, gamma=scale |
+
+**Comparison Table (Test Set — 2014):**
+
+| Model | R² Score | MAE (W/m²) | nRMSE (%) | CV R² |
+|---|---|---|---|---|
+| **Random Forest** 🏆 | **0.9846** | **12.75** | **3.96%** | 0.9819 ± 0.0009 |
+| **Gradient Boosting** | 0.9841 | 14.90 | 4.02% | 0.9813 ± 0.0008 |
+| **XGBoost** | 0.9842 | 13.88 | 4.01% | 0.9815 ± 0.0011 |
+| **SVR** | 0.9839 | 16.15 | 4.04% | 0.9818 ± 0.0003 |
+
+> **💡 Key Finding:** All 4 models achieve R² > 0.98 — confirming solar irradiance is highly predictable with good features. **Random Forest remains the best model** even after adding lag features. Phase 1 RF (nRMSE=5.56%) improved to **3.96%** in Phase 2 thanks to lag features alone.
+
+**Key Plots to show:**
+- `plots/15_model_comparison_metrics.png` — Bar chart: R², MAE, nRMSE
+- `plots/16_cv_comparison.png` — Boxplot: 5-fold CV stability
+- `plots/17_7day_forecast_comparison.png` — All 4 models on same 7-day window
+- `plots/21_phase2_summary_card.png` — Summary card with best model
+
+---
+
+## Slide 14: Semester Roadmap (Updated)
 
 ```
-Phase 1 (Week 1-3) ← CURRENT — COMPLETED
+Phase 1 (Week 1-3) — COMPLETED ✓
 ├── Static CSV + Random Forest baseline
-├── Next-day irradiance prediction
 ├── R² = 0.9695, nRMSE = 5.56%
-└── Deliverable: Working baseline ✓
+└── Deliverable: Working baseline model
 
-Phase 2 (Week 4-6)
-├── Hourly granularity predictions
-├── Compare RF vs XGBoost vs Gradient Boosting
-├── Time-series cross-validation
+Phase 2 (Week 4-6) — COMPLETED ✓
+├── Lag features + rolling averages (19 features)
+├── RF vs XGBoost vs Gradient Boosting vs SVR
+├── RandomizedSearchCV hyperparameter tuning
+├── Time-series cross-validation (TimeSeriesSplit)
 └── Deliverable: Model comparison report
 
 Phase 3 (Week 7-9)
 ├── Live weather API integration (OpenWeatherMap / NASA POWER API)
-├── Real-time data pipeline for Hyderabad
-├── Automated hourly/minutely predictions
+├── Real-time data pipeline for BITS Hyderabad campus
+├── Automated hourly predictions for Hyderabad location
 └── Deliverable: Live prediction pipeline
 
 Phase 4 (Week 10-12)
-├── LSTM / hybrid model comparison
-├── Interactive dashboard / web interface
+├── BiLSTM / Transformer / PINN deep learning models
+├── Interactive web dashboard (Streamlit / Next.js)
 ├── Hyderabad campus-specific predictions
 ├── Final report + live demo
-└── Deliverable: Complete system with UI
+└── Deliverable: Complete end-to-end system with UI
 ```
 
 ---
 
-## Slide 13: Next Steps (Phase 2 Preview)
+## Slide 15: Next Steps (Phase 3 Preview)
 
-**Immediate Next Steps:**
-1. **Model Comparison:** XGBoost, Gradient Boosting, Support Vector Regression
-2. **Hyperparameter Optimization:** GridSearchCV / RandomizedSearchCV
-3. **Advanced Feature Engineering:**
-   - Lag features (previous hour's GHI as input)
-   - Rolling averages (3-hour, 6-hour moving averages)
-   - Clear-sky index normalization
-4. **Hourly Predictions:** Move from daily to hourly granularity
-5. **Hyderabad Data:** Fetch from NASA POWER API for campus-specific model
+**Phase 3 Goals (Weeks 7–9):**
+1. **NASA POWER API** — fetch Hyderabad-specific live weather data automatically
+2. **OpenWeatherMap API** — real-time temperature, humidity, cloud cover
+3. **Automated Pipeline** — scheduled script that runs predictions every hour
+4. **BITS Hyderabad Model** — retrain best Phase 2 model on Hyderabad coordinates
 
 **Questions for Sir:**
-- Should we focus on Hyderabad-specific data or keep Rajasthan as baseline?
-- Priority: model comparison (XGBoost etc.) or live API integration first?
-- Any specific metrics or benchmarks to target?
+- Confirm which API to prioritize: NASA POWER (historical accuracy) or OpenWeatherMap (real-time)?
+- Should the Phase 3 pipeline predict for BITS Hyderabad campus specifically (lat: 17.54°N, lon: 78.57°E)?
+- Any performance threshold to meet before moving to Phase 4 deep learning?
 
 ---
 
-## Slide 14: Thank You & Q&A
+## Slide 16: Thank You & Q&A
 
-**Summary:**
-- Built a Random Forest model achieving **R² = 0.97** on unseen data
-- Identified Hour of Day and Temperature as key predictors
-- nRMSE of **5.56%** — well below literature baseline of 28%
-- Clear semester roadmap from static CSV to live predictions
+**Phase 2 Summary:**
+- Benchmarked **4 models** — RF, XGBoost, Gradient Boosting, SVR
+- Added **6 lag/rolling features** — GHI autocorrelation is the strongest predictor
+- Used **time-series cross-validation** — honest evaluation on future data
+- **Hyperparameter tuning** via RandomizedSearchCV (15 trials each)
+- Results saved in `phase2_results.txt` and plots `15–22` in `plots/`
 
-**GitHub / Code:** [Link to your repo if applicable]
+**GitHub / Code:** [Link to your repo]
 
 **References:**
 1. YouTube: "Regression Trees and Solar Radiation Forecasting" (Boosting, Bagging, Ensemble)
 2. NASA POWER Database (data source)
-3. scikit-learn RandomForestRegressor documentation
+3. scikit-learn & XGBoost documentation
+4. Chen & Guestrin (2016) — XGBoost: A Scalable Tree Boosting System

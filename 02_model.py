@@ -2,7 +2,6 @@
 =============================================================
 Person 2: ML Engineer — Random Forest Model
 DOP: Forecasting of Renewable Resources Using AI
-BITS Hyderabad | EEE Dept | Under Arup Ratan Sir
 =============================================================
 Model: Random Forest Regressor (scikit-learn)
 Target: GHI (Global Horizontal Irradiance) in W/m²
@@ -35,7 +34,7 @@ plt.rcParams.update({
 sns.set_style("whitegrid")
 os.makedirs('plots', exist_ok=True)
 
-# ── 1. Load Cleaned Data ─────────────────────────────────────
+#1. Load Cleaned Data
 print("Loading data...")
 df = pd.read_excel('BA_Combined.xlsx', sheet_name='Sheet1')
 
@@ -52,7 +51,7 @@ df['Month_cos'] = np.cos(2 * np.pi * df['Month'] / 12)
 
 print(f"Dataset loaded: {df.shape[0]} samples")
 
-# ── 2. Define Features and Target ────────────────────────────
+#2. Define Features and Target
 feature_cols = [
     'Hour', 'Month', 'DayOfYear',
     'Temperature', 'Dew Point', 'Pressure',
@@ -68,8 +67,8 @@ print(f"Features: {len(feature_cols)} columns")
 print(f"Target: {target_col}")
 print(f"Target stats — Mean: {y.mean():.2f}, Std: {y.std():.2f}, Max: {y.max()}")
 
-# ── 3. Time-Based Train/Test Split ───────────────────────────
-# Use 2010-2013 for training, 2014 for testing (realistic evaluation)
+#3. Time-Based Train/Test Split
+# Use 2010-2013 for training, 2014 for testing
 train_mask = df['Year'] <= 2013
 test_mask = df['Year'] == 2014
 
@@ -79,7 +78,7 @@ y_train, y_test = y[train_mask], y[test_mask]
 print(f"\nTrain set: {X_train.shape[0]} samples (2010-2013)")
 print(f"Test set:  {X_test.shape[0]} samples (2014)")
 
-# ── 4. Train Random Forest ───────────────────────────────────
+# 4. Train Random Forest
 print("\nTraining Random Forest model...")
 rf = RandomForestRegressor(
     n_estimators=200,       # 200 trees
@@ -94,11 +93,11 @@ rf = RandomForestRegressor(
 rf.fit(X_train, y_train)
 print("Model trained!")
 
-# ── 5. Predictions ───────────────────────────────────────────
+# 5. Predictions
 y_train_pred = rf.predict(X_train)
 y_test_pred = rf.predict(X_test)
 
-# ── 6. Evaluation Metrics ────────────────────────────────────
+# 6. Evaluation Metrics
 def evaluate(y_true, y_pred, label):
     r2 = r2_score(y_true, y_pred)
     mae = mean_absolute_error(y_true, y_pred)
@@ -121,13 +120,13 @@ def evaluate(y_true, y_pred, label):
 train_metrics = evaluate(y_train, y_train_pred, "TRAINING SET")
 test_metrics = evaluate(y_test, y_test_pred, "TEST SET (2014)")
 
-# ── 7. Cross-Validation ──────────────────────────────────────
+# 7. Cross-Validation
 print("\nRunning 5-fold cross-validation...")
 cv_scores = cross_val_score(rf, X_train, y_train, cv=5, scoring='r2', n_jobs=-1)
 print(f"CV R² scores: {cv_scores}")
 print(f"CV R² mean:   {cv_scores.mean():.4f} ± {cv_scores.std():.4f}")
 
-# ── PLOT 9: Actual vs Predicted (Scatter) ─────────────────────
+#PLOT 9: Actual vs Predicted (Scatter)
 fig, axes = plt.subplots(1, 2, figsize=(14, 6))
 
 # Training
@@ -152,7 +151,7 @@ plt.savefig('plots/09_actual_vs_predicted_scatter.png', bbox_inches='tight')
 plt.close()
 print("Saved: plots/09_actual_vs_predicted_scatter.png")
 
-# ── PLOT 10: Feature Importance ───────────────────────────────
+# PLOT 10: Feature Importance
 fig, ax = plt.subplots(figsize=(10, 7))
 feat_imp = pd.Series(rf.feature_importances_, index=feature_cols).sort_values(ascending=True)
 colors_fi = plt.cm.RdYlBu_r(np.linspace(0.2, 0.8, len(feat_imp)))
@@ -196,7 +195,7 @@ plt.savefig('plots/11_timeseries_7day.png', bbox_inches='tight')
 plt.close()
 print("Saved: plots/11_timeseries_7day.png")
 
-# ── PLOT 12: Residual Analysis ────────────────────────────────
+# PLOT 12: Residual Analysis
 fig, axes = plt.subplots(1, 2, figsize=(14, 5))
 
 residuals = y_test.values - y_test_pred
@@ -220,7 +219,7 @@ plt.savefig('plots/12_residual_analysis.png', bbox_inches='tight')
 plt.close()
 print("Saved: plots/12_residual_analysis.png")
 
-# ── PLOT 13: Metrics Summary Card ─────────────────────────────
+# PLOT 13: Metrics Summary Card
 fig, ax = plt.subplots(figsize=(8, 5))
 ax.axis('off')
 
@@ -232,14 +231,17 @@ metrics_text = f"""
     Train:        2010–2013  |  Test: 2014
     Target:       GHI (Global Horizontal Irradiance)
 
-    ┌──────────────────┬───────────┬───────────┐
-    │     Metric       │   Train   │    Test   │
-    ├──────────────────┼───────────┼───────────┤
-    │  R² Score        │  {train_metrics['R²']:.4f}   │  {test_metrics['R²']:.4f}  │
-    │  MAE (W/m²)      │  {train_metrics['MAE']:.2f}  │  {test_metrics['MAE']:.2f} │
-    │  RMSE (W/m²)     │  {train_metrics['RMSE']:.2f}  │  {test_metrics['RMSE']:.2f} │
-    │  nRMSE (%)       │  {train_metrics['nRMSE']:.2f}   │  {test_metrics['nRMSE']:.2f}  │
-    └──────────────────┴───────────┴───────────┘
+    TRAIN SET (2010–2013):
+      R² Score:    {train_metrics['R²']:.4f}
+      MAE:         {train_metrics['MAE']:.2f} W/m²
+      RMSE:        {train_metrics['RMSE']:.2f} W/m²
+      nRMSE:       {train_metrics['nRMSE']:.2f}%
+
+    TEST SET (2014):
+      R² Score:    {test_metrics['R²']:.4f}
+      MAE:         {test_metrics['MAE']:.2f} W/m²
+      RMSE:        {test_metrics['RMSE']:.2f} W/m²
+      nRMSE:       {test_metrics['nRMSE']:.2f}%
 
     CV R² (5-fold):   {cv_scores.mean():.4f} ± {cv_scores.std():.4f}
 """
@@ -252,7 +254,7 @@ plt.savefig('plots/13_metrics_summary.png', bbox_inches='tight')
 plt.close()
 print("Saved: plots/13_metrics_summary.png")
 
-# ── PLOT 14: Hourly Prediction Accuracy ──────────────────────
+# PLOT 14: Hourly Prediction Accuracy
 fig, axes = plt.subplots(1, 2, figsize=(14, 5))
 
 test_df_eval = df[test_mask].copy()
@@ -319,3 +321,76 @@ print("\nSaved: model_results.txt")
 
 print("\n[DONE] Model training and evaluation complete!")
 print("   All plots saved to plots/ directory")
+
+# ── 8. Predict for a Specific Date
+def predict_specific_date(year, month, day, df_source=df, model=rf, save_plot=True):
+    """
+    Extracts 24-hour weather data for a specific date and forecasts hourly GHI.
+    
+    Parameters:
+        year (int): e.g. 2014
+        month (int): 1 to 12
+        day (int): 1 to 31
+        df_source (DataFrame): dataset with features
+        model (RandomForestRegressor): trained model
+        save_plot (bool): whether to save a 24-hour forecast plot
+        
+    Returns:
+        DataFrame containing Hourly Actual vs Predicted GHI and Errors.
+    """
+    date_mask = (df_source['Year'] == year) & (df_source['Month'] == month) & (df_source['Day'] == day)
+    day_data = df_source[date_mask].copy().sort_values('Hour')
+    
+    if len(day_data) == 0:
+        print(f"[ERROR] No data found for date: {year:04d}-{month:02d}-{day:02d}")
+        return None
+        
+    # Extract features and predict
+    X_date = day_data[feature_cols]
+    day_data['Predicted_GHI'] = model.predict(X_date)
+    day_data['Error'] = day_data['GHI'] - day_data['Predicted_GHI']
+    day_data['Abs_Error'] = np.abs(day_data['Error'])
+    
+    date_str = f"{year:04d}-{month:02d}-{day:02d}"
+    print("\n" + "="*65)
+    print(f"  HOURLY SOLAR FORECAST FOR: {date_str}")
+    print("="*65)
+    print(f"{'Hour':<8} {'Temp(°C)':<10} {'Humidity(%)':<14} {'Actual GHI':<14} {'Predicted GHI':<15} {'Error':<10}")
+    print("-"*65)
+    for _, row in day_data.iterrows():
+        print(f"{int(row['Hour']):02d}:30   {row['Temperature']:<10.1f} {row['Relative Humidity']:<14.1f} {row['GHI']:<14.1f} {row['Predicted_GHI']:<15.1f} {row['Error']:<+10.1f}")
+    
+    # Daily statistics
+    actual_energy = day_data['GHI'].sum() / 1000  # kWh/m²
+    pred_energy = day_data['Predicted_GHI'].sum() / 1000
+    daily_mae = day_data['Abs_Error'].mean()
+    daily_r2 = r2_score(day_data['GHI'], day_data['Predicted_GHI'])
+    
+    print("-"*65)
+    print(f"Daily Actual Solar Energy:    {actual_energy:.2f} kWh/m²")
+    print(f"Daily Predicted Solar Energy: {pred_energy:.2f} kWh/m²")
+    print(f"Daily Mean Absolute Error:    {daily_mae:.2f} W/m²")
+    print(f"Daily R² Score:               {daily_r2:.4f}")
+    print("="*65)
+    
+    if save_plot:
+        fig, ax = plt.subplots(figsize=(10, 5))
+        ax.plot(day_data['Hour'], day_data['GHI'], 'o-', color='#FF6B35', linewidth=2, label='Actual GHI')
+        ax.plot(day_data['Hour'], day_data['Predicted_GHI'], 's--', color='#4A90D9', linewidth=2, label='Predicted GHI')
+        ax.fill_between(day_data['Hour'], day_data['GHI'], day_data['Predicted_GHI'], alpha=0.2, color='gray', label='Error')
+        ax.set_xlabel('Hour of Day')
+        ax.set_ylabel('GHI (W/m²)')
+        ax.set_title(f'24-Hour Solar Forecast: {date_str} (R² = {daily_r2:.4f}, MAE = {daily_mae:.1f} W/m²)')
+        ax.set_xticks(range(0, 24, 2))
+        ax.legend()
+        plt.tight_layout()
+        plot_path = f'plots/forecast_{date_str}.png'
+        plt.savefig(plot_path, bbox_inches='tight')
+        plt.close()
+        print(f"Saved forecast plot: {plot_path}")
+        
+    return day_data[['Hour', 'Temperature', 'Relative Humidity', 'GHI', 'Predicted_GHI', 'Error', 'Abs_Error']]
+
+# Example: Predict 24-hour solar irradiance for May 15, 2014 (Peak Summer)
+print("\n--- Example: Specific Date Forecast ---")
+sample_forecast = predict_specific_date(year=2014, month=5, day=15)
