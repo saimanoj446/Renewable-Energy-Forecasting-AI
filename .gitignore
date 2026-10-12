@@ -18,3 +18,6 @@ ENV/
 # OS
 Thumbs.db
 .DS_Store
+
+# Large Generated Datasets
+kuala_lumpur/kuala_lumpur_1min.csv

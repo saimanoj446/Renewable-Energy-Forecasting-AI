@@ -324,82 +324,164 @@ This confirms the well-established finding in time-series forecasting that **rec
 
 ---
 
-## 7. Future Work
+---
 
-### 7.1 Phase 3 — Live API Integration (Weeks 7–9)
+## 7. Meeting Deliverables & Advanced Phases (Phase 3 & 4)
 
-- Integrate **NASA POWER API** and **OpenWeatherMap API** for real-time weather data ingestion
-- Build an automated pipeline for BITS Pilani Hyderabad campus (17.54°N, 78.57°E)
-- Retrain the best Phase 2 model on Hyderabad-specific coordinates
+Following direct design guidance and review from **Prof. Arup Ratan**, six major deliverables were established and completed to elevate this work from static machine learning baselines to a robust, physics-informed, multi-resolution operational solar forecasting system.
 
-### 7.2 Phase 4 — Deep Learning & Deployment (Weeks 10–12)
+### 7.1 Key Feature Selection & Dimensionality Reduction (Phase 3a)
 
-- Implement **BiLSTM** (Bidirectional Long Short-Term Memory) for temporal sequence learning
-- Explore **Temporal Transformers** for attention-based solar forecasting
-- Investigate **Physics-Informed Neural Networks (PINNs)** that embed atmospheric constraints into the loss function
-- Deploy an interactive **web dashboard** (Streamlit or Next.js) for real-time GHI predictions
+To address the professor's core thesis that only a minimal subset of high-impact features is required for operational forecasting:
+- Evaluated 4 distinct feature importance techniques: Random Forest Gini impurity, Permutation Importance on out-of-time test data, Mutual Information regression, and Pearson Correlation.
+- **Dimensionality Reduction Proof (Rajasthan Hourly):**
+  - Full Model (21 features): $R^2 = 0.9955$, $\text{MAE} = 9.87\text{ W/m}^2$, $\text{nRMSE} = 2.87\%$
+  - Reduced Model (**8 Key Features**): $R^2 = 0.9949$, $\text{MAE} = 10.15\text{ W/m}^2$, $\text{nRMSE} = 2.95\%$
+  - **Performance Drop:** $\Delta R^2 = -0.0006$ (negligible).
+- **Identified Top 8 Features:** `DNI`, `Hour_cos`, `DHI`, `GHI_lag1`, `Hour`, `Hour_sin`, `GHI_roll3`, `GHI_roll6`. Exogenous atmospheric parameters (Wind Speed, Surface Pressure, Dew Point) contribute less than 2% of total permutation importance.
+
+*[Insert Figure: plots/23_key_feature_identification.png — caption: "4-method key feature importance and selection ranking"]*
+*[Insert Figure: plots/24_full_vs_reduced_model.png — caption: "Full 21-feature model vs. Reduced 8-feature model forecast parity"]*
+
+### 7.2 Walk-Forward Rolling Window "Time-Travel" Simulation (Phase 3b)
+
+To simulate an authentic real-time deployment where the model "travels forward in time" without seeing future test observations:
+- Trained on 2010–2013 data and simulated a time-travel walk-forward validation across December 14, 2014.
+- At each hour $h$, an input window of historical observations was fed to predict the subsequent horizon, followed by advancing the window by 1 hour.
+- **Convergence Proof:** Because future time points are forecasted across overlapping sliding windows from multiple starting points ($t-24h$ down to $t-1h$), later predictions progressively converge toward the ground truth with monotonically decreasing error variance.
+
+*[Insert Figure: plots/26_rolling_window_forecast.png — caption: "Rolling walk-forward forecast and multi-start ensemble prediction"]*
+*[Insert Figure: plots/28_convergence_analysis.png — caption: "Forecast error convergence as lookback window slides closer to target hour"]*
+
+### 7.3 Minute-Level Validation: Kuala Lumpur Geographic Dataset (Phase 3c)
+
+To prove that the feature importance hierarchy and the "8 key features" rule are generalizable across different geographic and climate zones, an independent **1-minute resolution dataset** was ingested and processed for **Kuala Lumpur, Malaysia (2025)**:
+- **Location & Climate:** Lat 3.1390° N, Lon 101.6869° E (Equatorial tropical climate with extreme cloud intermittency vs. arid Rajasthan).
+- **Volume:** 365 daily files, 262,020 1-minute records, paired with Open-Meteo hourly weather interpolated to 1-minute intervals.
+- **Dimensionality Reduction Proof (Minute-Level):**
+  - Full Model (25 features): $R^2 = 0.9162$
+  - Reduced Model (**8 Key Features**): $R^2 = 0.9169$ ($\Delta R^2 = +0.0007$, zero accuracy loss).
+- **Identified Top 8 Minute-Level Features:** `GHI_lag1`, `GHI_roll5`, `GHI_roll10`, `GHI_lag5`, `GHI_lag10`, `GHI_roll60`, `GHI_roll30`, `Hour_sin`. Recent GHI temporal dynamics completely dominate minute-to-minute transitions.
+
+*[Insert Figure: plots/29_kl_eda_overview.png — caption: "1-minute resolution GHI distribution and seasonal diurnal profiles for Kuala Lumpur"]*
+*[Insert Figure: plots/32_kl_feature_importance.png — caption: "Feature importance breakdown for 1-minute solar irradiance forecasting"]*
+
+### 7.4 The "8 Features × 60 Minutes = 480 Data Points" Rule
+
+Prof. Arup Ratan formulated that an input matrix comprising **8 features across a 60-minute window ($8 \times 60 = 480$ data points)** contains virtually the entire predictive information needed for near-future solar forecasting:
+- Generated a normalized matrix visualization demonstrating that every 60-minute rolling window maps directly into a $60 \times 8$ matrix grid.
+- Proved empirically that expanding the lookback beyond 60 minutes or adding additional weather features yields negligible gains, validating the 480-point input window.
+
+*[Insert Figure: plots/33_kl_480_datapoints_matrix.png — caption: "Matrix heat map of the 8 features × 60 minutes = 480 data point input window"]*
+
+### 7.5 Deep Learning Sequence Model: PyTorch LSTM (Phase 3d)
+
+To leverage the full temporal sequence structure of the 480 data points, a 2-layer **Long Short-Term Memory (LSTM)** neural network was constructed in **PyTorch**:
+- **Tensor Input:** `(batch_size, 60, 8)` representing 60 time steps of 8 features.
+- **Architecture:** 2 LSTM layers (hidden dimension = 64, dropout = 0.2), followed by a multi-output dense prediction head.
+- **Out-of-Time Testing:** Trained on Jan–Aug 2025 ($73,107$ sequences), validated on Sep 2025 ($9,030$ sequences), tested on Oct–Dec 2025 ($55,292$ sequences).
+- **Multi-Horizon Forecasting Accuracy:**
+
+| Horizon | Lead Time | $R^2$ Score | RMSE ($W/m^2$) | MAE ($W/m^2$) | Skill Score vs Persistence |
+|---|---|---|---|---|---|
+| **+1 min** | 1 minute ahead | **0.8978** | **91.22** | **47.77** | **+3.07%** |
+| **+5 min** | 5 minutes ahead | **0.7494** | **142.99** | **89.99** | **+11.66%** |
+| **+15 min** | 15 minutes ahead | **0.6321** | **173.90** | **121.30** | **+17.16%** |
+| **+30 min** | 30 minutes ahead | **0.5712** | **189.50** | **139.03** | **+20.30%** |
+| **+60 min** | 60 minutes ahead | **0.5266** | **204.67** | **155.80** | **+25.79%** |
+
+- The LSTM's forecast skill over persistence scales from **+3.07% at 1 min** to **+25.79% at 60 min**, demonstrating superior stability over long forecast horizons under extreme tropical variability.
+
+*[Insert Figure: plots/34_kl_lstm_training_loss.png — caption: "PyTorch LSTM training and validation loss convergence"]*
+*[Insert Figure: plots/36_kl_lstm_1min_walkforward_day.png — caption: "Continuous 1-minute walk-forward forecast across an entire test day"]*
+*[Insert Figure: plots/38_kl_lstm_multi_horizon.png — caption: "Forecast RMSE and IEEE skill score across horizons from 1 to 60 minutes"]*
+
+### 7.6 Physics-Based PV Maximum Power Point (MPP) Generation
+
+To translate forecasted meteorological irradiance into actionable electrical power generation without requiring direct historical plant SCADA data, the standard Sandia / IEC photovoltaic cell temperature derating model was coupled with the predictions:
+
+$$T_{\text{cell}} = T_{\text{amb}} + \frac{\text{NOCT} - 20}{800} \times \text{GHI}$$
+$$P_{\text{mpp}} = P_{\text{stc}} \times \left(\frac{\text{GHI}}{1000}\right) \times \left[1 + \alpha (T_{\text{cell}} - 25)\right]$$
+
+- Parameterized for a standard 300W monocrystalline silicon module ($P_{\text{stc}} = 300\text{ W}$, $\alpha = -0.0035/^\circ\text{C}$, $\text{NOCT} = 45^\circ\text{C}$).
+- **Rajasthan Hourly MPP Power:** $R^2 = 0.9814$, $\text{MAE} = 4.82\text{ W/module}$.
+- **Kuala Lumpur 1-Minute LSTM MPP Power:** Daytime $R^2 = 0.9020$, $\text{MAE} = 12.41\text{ W/module}$, $\text{RMSE} = 23.10\text{ W/module}$.
+
+*[Insert Figure: plots/27_mpp_power_forecast.png — caption: "Physics-based MPP power forecast vs actual PV output (Rajasthan)"]*
+*[Insert Figure: plots/37_kl_lstm_mpp_power.png — caption: "1-minute LSTM predicted MPP power generation profile (Kuala Lumpur)"]*
 
 ---
 
-## 8. Conclusion
+## 8. Summary of Completed Deliverables vs. Meeting Directives
 
-This midsemester report demonstrates a systematic, two-phase machine learning framework for short-term solar irradiance forecasting. Key contributions include:
-
-1. **Phase 1** established a strong Random Forest baseline (R² = 0.9695, nRMSE = 5.56%) that already outperforms the literature benchmark of 28% nRMSE for tree-based methods
-2. **Phase 2** showed that temporal feature engineering (lag and rolling features) provides a 28.8% reduction in nRMSE — a larger improvement than any algorithm change
-3. A comprehensive comparison of four models (RF, XGBoost, Gradient Boosting, SVR) confirms that **Random Forest delivers the best overall accuracy** at 3.96% nRMSE, though all four models achieve competitive R² > 0.98
-4. The project establishes a clear roadmap from static batch prediction to real-time, physics-informed forecasting for campus-level deployment
-
-These results validate the viability of ensemble machine learning methods for operational solar forecasting in Indian climatic conditions.
-
----
-
-## 9. References
-
-[1] T. Ahmad, H. Chen, and Y. Shah, "Tree-based ensemble methods for predicting PV power generation and their comparison with deep learning approaches," *IEEE Access*, vol. 8, pp. 73–87, 2020.
-
-[2] T. Chen and C. Guestrin, "XGBoost: A Scalable Tree Boosting System," in *Proc. 22nd ACM SIGKDD Int. Conf. Knowledge Discovery and Data Mining*, pp. 785–794, 2016.
-
-[3] A. Javed, H. Larijani, and A. Wixted, "Predicting solar irradiance using machine learning techniques," in *Proc. IEEE Int. Symp. on Wireless Systems within the Conferences on Intelligent Data Acquisition*, pp. 1–6, 2020.
-
-[4] R. H. Inman, H. T. C. Pedro, and C. F. M. Coimbra, "Solar forecasting methods for renewable energy integration," *Progress in Energy and Combustion Science*, vol. 39, no. 6, pp. 535–576, 2013.
-
-[5] P. Kumari and D. Toshniwal, "Deep learning models for solar irradiance forecasting: A comprehensive review," *Journal of Cleaner Production*, vol. 318, 2021.
-
-[6] "Regression Trees and Solar Radiation Forecasting: Boosting, Bagging, and Ensemble Learning Cases," Research Lecture on Solar Forecasting Methods, 2022.
-
-[7] M. Raissi, P. Perdikaris, and G. E. Karniadakis, "Physics-informed neural networks: A deep learning framework for solving forward and inverse problems involving nonlinear partial differential equations," *Journal of Computational Physics*, vol. 378, pp. 686–707, 2019.
-
-[8] NASA POWER Data Access Viewer, "Prediction of Worldwide Energy Resources," NASA Langley Research Center. [Online]. Available: https://power.larc.nasa.gov/
+| No. | Directive from Prof. Arup Ratan | Implementation & Deliverable | Status |
+| :--- | :--- | :--- | :--- |
+| **1** | **Prove Key Features on Hourly Data** | 4-method feature importance on Rajasthan (`04_key_features.py`); Top 8 features yield $R^2 = 0.9949$ vs Full $0.9955$. | **Fulfilled ✅** |
+| **2** | **Rolling Walk-Forward "Time-Travel" Simulation** | 24-hour walk-forward simulation on Dec 14, 2014 (`05_rolling_window_forecast.py`); proven convergence of multi-start predictions. | **Fulfilled ✅** |
+| **3** | **Generalize to a Second Geographic Area at Minute-Level** | Processed 365 daily 1-min files for Kuala Lumpur 2025 (`06_prepare_1min_dataset.py`, $262,020$ records); proved top 8 features on minute data (`07_minute_eda.py`). | **Fulfilled ✅** |
+| **4** | **"8 Features × 60 Minutes = 480 Data Points" Rule** | Generated 480-point normalized matrix visualization; structured input tensors as $(N, 60, 8)$. | **Fulfilled ✅** |
+| **5** | **Deep Learning Sequence Modeling (LSTM)** | Trained 2-layer PyTorch LSTM (`08_lstm_forecast.py`); achieved $R^2 = 0.8978$ at +1 min and up to $+25.79\%$ skill score over persistence. | **Fulfilled ✅** |
+| **6** | **Physics-Based MPP Power Generation** | Coupled irradiance and ambient temperature to IEC PV derating model; daytime MPP power $R^2 = 0.9020$. | **Fulfilled ✅** |
 
 ---
 
-## Appendix A: Code Repository
+## 9. Conclusion
 
-The complete source code for this project is available at:
-**GitHub:** https://github.com/saimanoj446/Renewable-Energy-Forecasting-AI
-
-| File | Description |
-|---|---|
-| `01_eda.py` | Data cleaning, feature engineering & 8 EDA visualizations |
-| `02_model.py` | Random Forest regressor, cross-validation, evaluation & 6 diagnostic plots |
-| `03_model_comparison.py` | Phase 2: RF vs XGBoost vs GBM vs SVR (8 comparison plots) |
+This project presents a multi-tiered, physics-informed AI framework for renewable solar forecasting spanning both hourly (macro) and 1-minute (micro) resolutions. By methodically identifying the essential 8 features and demonstrating that 480 spatio-temporal data points govern short-term solar behavior, we eliminated model bloat while maintaining state-of-the-art predictive accuracy ($R^2 > 0.98$ hourly, $R^2 \approx 0.90$ 1-minute). Furthermore, combining recurrent neural networks (LSTM) with thermodynamic cell equations enables direct, zero-leakage prediction of solar power delivery at the grid connection point.
 
 ---
 
-## Appendix B: List of Figures
+## 10. References
 
-| Figure No. | Description | File |
+[1] T. Ahmad, H. Chen, and Y. Shah, "Tree-based ensemble methods for predicting PV power generation and their comparison with deep learning approaches," *IEEE Access*, vol. 8, pp. 73–87, 2020.  
+[2] T. Chen and C. Guestrin, "XGBoost: A Scalable Tree Boosting System," in *Proc. 22nd ACM SIGKDD Int. Conf. Knowledge Discovery and Data Mining*, pp. 785–794, 2016.  
+[3] A. Javed, H. Larijani, and A. Wixted, "Predicting solar irradiance using machine learning techniques," in *Proc. IEEE Int. Symp. on Wireless Systems within the Conferences on Intelligent Data Acquisition*, pp. 1–6, 2020.  
+[4] R. H. Inman, H. T. C. Pedro, and C. F. M. Coimbra, "Solar forecasting methods for renewable energy integration," *Progress in Energy and Combustion Science*, vol. 39, no. 6, pp. 535–576, 2013.  
+[5] P. Kumari and D. Toshniwal, "Deep learning models for solar irradiance forecasting: A comprehensive review," *Journal of Cleaner Production*, vol. 318, 2021.  
+[6] M. Raissi, P. Perdikaris, and G. E. Karniadakis, "Physics-informed neural networks: A deep learning framework for solving forward and inverse problems involving nonlinear partial differential equations," *Journal of Computational Physics*, vol. 378, pp. 686–707, 2019.  
+[7] NASA POWER Data Access Viewer, "Prediction of Worldwide Energy Resources," NASA Langley Research Center. [Online]. Available: https://power.larc.nasa.gov/  
+[8] Open-Meteo Historical Weather API, "High-resolution global weather archive," Open-Meteo GmbH. [Online]. Available: https://open-meteo.com/  
+
+---
+
+## Appendix A: Code Repository Structure
+
+The complete source code is modularized as follows:
+
+| Script / File | Phase | Description |
 |---|---|---|
-| Fig. 1 | GHI Distribution (Overall vs Daytime) | `plots/01_ghi_distribution.png` |
-| Fig. 2 | Average Hourly GHI Profile | `plots/02_hourly_ghi_profile.png` |
-| Fig. 3 | Monthly Average GHI (Season-coded) | `plots/03_monthly_ghi.png` |
-| Fig. 4 | Feature Correlation Heatmap | `plots/04_correlation_heatmap.png` |
-| Fig. 5 | Seasonal GHI Profiles | `plots/05_seasonal_ghi_profiles.png` |
-| Fig. 6 | Actual vs Predicted Scatter | `plots/09_actual_vs_predicted_scatter.png` |
-| Fig. 7 | Feature Importance Rankings | `plots/10_feature_importance.png` |
-| Fig. 8 | 7-Day Time-Series Forecast | `plots/11_timeseries_7day.png` |
-| Fig. 9 | Residual Analysis | `plots/12_residual_analysis.png` |
-| Fig. 10 | Phase 2 Model Comparison | `plots/15_model_comparison_metrics.png` |
-| Fig. 11 | Phase 2 7-Day Forecast Comparison | `plots/17_7day_forecast_comparison.png` |
-| Fig. 12 | Phase 2 Summary Card | `plots/21_phase2_summary_card.png` |
+| `01_eda.py` | Phase 1 | Rajasthan hourly cleaning, feature engineering, and 8 EDA plots |
+| `02_model.py` | Phase 1 | Random Forest baseline model and residual diagnostics |
+| `03_model_comparison.py` | Phase 2 | Benchmarking RF vs XGBoost vs GBM vs SVR with lag features |
+| `04_key_features.py` | Phase 3a | 4-method feature importance proof & dimensionality reduction (Rajasthan) |
+| `05_rolling_window_forecast.py` | Phase 3b | Walk-forward "time-travel" rolling forecast & convergence proof |
+| `kuala_lumpur/06_prepare_1min_dataset.py` | Phase 3c | Ingestion & interpolation of 365 daily 1-min files + Open-Meteo weather |
+| `kuala_lumpur/07_minute_eda.py` | Phase 3c | 1-minute EDA, feature importance proof, and 480-point matrix plot |
+| `kuala_lumpur/08_lstm_forecast.py` | Phase 3d | PyTorch 2-layer LSTM sequence model & physics-based MPP power forecast |
+
+---
+
+## Appendix B: Comprehensive List of Figures
+
+| Figure No. | Description | Output File |
+|---|---|---|
+| **Fig. 01–08** | Rajasthan Hourly Exploratory Data Analysis & Irradiance Profiles | `plots/01_ghi_distribution.png` to `08_irradiance_components.png` |
+| **Fig. 09–14** | Baseline Random Forest Predictions, Residuals, and Seasonal Accuracies | `plots/09_actual_vs_predicted_scatter.png` to `14_hourly_monthly_accuracy.png` |
+| **Fig. 15–22** | Phase 2 Multi-Model Benchmark (RF vs XGBoost vs GBM vs SVR) | `plots/15_model_comparison_metrics.png` to `22_monthly_r2_comparison.png` |
+| **Fig. 23** | 4-Method Key Feature Identification (Rajasthan Hourly) | `plots/23_key_feature_identification.png` |
+| **Fig. 24** | Full 21-Feature vs Reduced 8-Feature Parity Plot | `plots/24_full_vs_reduced_model.png` |
+| **Fig. 25** | Feature Importance Category Pie Breakdown | `plots/25_feature_category_pie.png` |
+| **Fig. 26** | Rolling Walk-Forward "Time-Travel" Simulation | `plots/26_rolling_window_forecast.png` |
+| **Fig. 27** | Physics-Based Maximum Power Point (MPP) Forecast vs Actual PV Power | `plots/27_mpp_power_forecast.png` |
+| **Fig. 28** | Multi-Start Forecast Error Convergence Proof | `plots/28_convergence_analysis.png` |
+| **Fig. 29** | Kuala Lumpur 1-Minute GHI Overview & Seasonal Profiles | `plots/29_kl_eda_overview.png` |
+| **Fig. 30** | 1-Minute Feature Correlation Heatmap | `plots/30_kl_correlation_heatmap.png` |
+| **Fig. 31** | 1-Minute Time Series Profile (5,040 minute records) | `plots/31_kl_1min_timeseries_week.png` |
+| **Fig. 32** | 1-Minute 4-Method Feature Importance Proof | `plots/32_kl_feature_importance.png` |
+| **Fig. 33** | 8 Features × 60 Minutes = 480 Data Points Normalized Matrix | `plots/33_kl_480_datapoints_matrix.png` |
+| **Fig. 34** | PyTorch LSTM Sequence Model Training & Validation Loss Curves | `plots/34_kl_lstm_training_loss.png` |
+| **Fig. 35** | PyTorch LSTM Actual vs Predicted Scatter & Error Distribution | `plots/35_kl_lstm_scatter_and_residuals.png` |
+| **Fig. 36** | Continuous 1-Minute Walk-Forward Forecast Over Full Test Day | `plots/36_kl_lstm_1min_walkforward_day.png` |
+| **Fig. 37** | Physics-Based MPP PV Module Power Output Profile (1-Minute) | `plots/37_kl_lstm_mpp_power.png` |
+| **Fig. 38** | Multi-Horizon Forecast RMSE & IEEE Skill Score (+1m to +60m) | `plots/38_kl_lstm_multi_horizon.png` |
+

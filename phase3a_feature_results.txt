@@ -1,0 +1,32 @@
+PHASE 3a: KEY FEATURE IDENTIFICATION
+DOP — BITS Pilani Hyderabad | EEE | Prof. Arup Ratan
+============================================================
+
+Full model R²  (21 features): 0.9955
+Reduced model R² (8 features): 0.9949
+R² drop (negligible): 0.0007
+
+KEY FEATURES (top 8 by permutation importance):
+  1. DNI                    perm=0.2317  gini=0.2014
+  2. Hour_cos               perm=0.0916  gini=0.2190
+  3. DHI                    perm=0.0539  gini=0.1462
+  4. GHI_lag1               perm=0.0393  gini=0.1206
+  5. Hour                   perm=0.0178  gini=0.0593
+  6. Hour_sin               perm=0.0165  gini=0.0595
+  7. GHI_roll3              perm=0.0122  gini=0.0404
+  8. GHI_roll6              perm=0.0099  gini=0.0506
+
+WEAK FEATURES (can be dropped):
+  GHI_lag2               perm=0.0061  gini=0.0390
+  Month_cos              perm=0.0044  gini=0.0080
+  DayOfYear              perm=0.0023  gini=0.0042
+  GHI_lag3               perm=0.0012  gini=0.0135
+  Temperature            perm=0.0011  gini=0.0181
+  Month                  perm=0.0009  gini=0.0024
+  Temp_lag1              perm=0.0008  gini=0.0092
+  Pressure               perm=0.0003  gini=0.0022
+  Month_sin              perm=0.0003  gini=0.0011
+  Dew Point              perm=0.0002  gini=0.0011
+  Relative Humidity      perm=0.0002  gini=0.0031
+  Wind Speed             perm=0.0000  gini=0.0004
+  Wind Direction         perm=0.0000  gini=0.0005

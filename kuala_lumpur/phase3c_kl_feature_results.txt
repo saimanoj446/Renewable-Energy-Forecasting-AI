@@ -1,0 +1,45 @@
+PHASE 3c: 1-MINUTE FEATURE ANALYSIS (KUALA LUMPUR)
+DOP -- BITS Pilani Hyderabad | EEE | Prof. Arup Ratan
+============================================================
+
+Dataset: Kuala Lumpur 1-min GHI + Open-Meteo weather (2025)
+Total rows: 260,806 (daytime, GHI > 0)
+Resolution: 1 minute
+
+Full model R2  (25 features): 0.9162
+Reduced model  (8 features): 0.9169
+R2 drop: -0.0006 (negligible)
+
+TOP 8 KEY FEATURES (permutation importance):
+  1. GHI_lag1               perm=0.3442  gini=0.2978  r=0.941
+  2. GHI_roll5              perm=0.0780  gini=0.1703  r=0.922
+  3. GHI_roll10             perm=0.0272  gini=0.1124  r=0.901
+  4. GHI_lag5               perm=0.0119  gini=0.0997  r=0.850
+  5. GHI_lag10              perm=0.0037  gini=0.0704  r=0.793
+  6. GHI_roll60             perm=0.0023  gini=0.0538  r=0.815
+  7. GHI_roll30             perm=0.0020  gini=0.0635  r=0.857
+  8. Hour_sin               perm=0.0011  gini=0.0052  r=0.021
+
+WEAK FEATURES:
+  Hour_cos               perm=0.0007
+  GHI_lag60              perm=0.0007
+  GHI_lag30              perm=0.0007
+  Hour                   perm=0.0006
+  Temperature            perm=0.0005
+  DHI                    perm=0.0005
+  Temp_lag5              perm=0.0002
+  Relative Humidity      perm=0.0002
+  DNI                    perm=0.0002
+  Wind Direction         perm=0.0001
+  Month_cos              perm=0.0001
+  Pressure               perm=0.0001
+  Wind Speed             perm=0.0000
+  Month                  perm=0.0000
+  DayOfYear              perm=0.0000
+  Month_sin              perm=-0.0000
+  Minute                 perm=-0.0001
+
+KEY INSIGHT:
+  8 features x 60 min = 480 data points per window
+  Same conclusion as Rajasthan hourly data:
+  GHI lags + time features dominate; Wind/Pressure negligible

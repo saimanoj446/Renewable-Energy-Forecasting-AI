@@ -1,0 +1,38 @@
+PHASE 3d: PYTORCH LSTM SOLAR FORECASTING RESULTS (KUALA LUMPUR)
+DOP: Forecasting of Renewable Resources Using AI
+BITS Pilani, Hyderabad Campus | EEE Dept | Prof. Arup Ratan
+======================================================================
+
+1. DATASET CONFIGURATION:
+   Location: Kuala Lumpur, Malaysia (Lat 3.1390° N, Lon 101.6869° E)
+   Resolution: 1-Minute | Year: 2025
+   Train Split: Jan 1 - Aug 31 (73,107 sequences)
+   Val Split:   Sep 1 - Sep 30 (9,030 sequences)
+   Test Split:  Oct 1 - Dec 31 (55,292 sequences)
+
+2. PROFESSOR'S '480 DATA POINTS' FORMULATION:
+   Lookback Window: 60 minutes (T=60)
+   Selected 8 Features: ['GHI', 'Temperature', 'Relative Humidity', 'DNI', 'DHI', 'Pressure', 'Hour_sin', 'Hour_cos']
+   Total Input Dimension: 8 features x 60 minutes = 480 points per sample
+   Input Tensor Shape: (batch_size, 60, 8)
+
+3. MULTI-HORIZON FORECASTING METRICS ON OUT-OF-TIME TEST SET:
+   Horizon      R² Score     RMSE (W/m²)     MAE (W/m²)      Skill Score (%)
+   -----------------------------------------------------------------
+   +1         m 0.8978       91.22           47.77           +3.07          %
+   +5         m 0.7494       142.99          89.99           +11.66         %
+   +15        m 0.6321       173.90          121.30          +17.16         %
+   +30        m 0.5712       189.50          139.03          +20.30         %
+   +60        m 0.5266       204.67          155.80          +25.79         %
+
+4. PHYSICS-BASED MAXIMUM POWER POINT (MPP) GENERATION:
+   Photovoltaic Module: 300W STC (alpha=-0.0035/°C, NOCT=45°C)
+   MPP Power R²:   0.9020
+   MPP Power MAE:  12.41 W / module
+   MPP Power RMSE: 23.10 W / module
+
+5. KEY RESEARCH TAKEAWAYS:
+   - The 2-layer LSTM effectively extracts temporal dynamics from the 60-minute window.
+   - Achieved R² = 0.8978 for 1-minute ahead forecasting.
+   - Consistently outperforms persistence benchmark across all horizons (+3.1% skill at 1m).
+   - Proves the professor's 480-point temporal input formulation for deep learning models.

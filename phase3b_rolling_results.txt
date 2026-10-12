@@ -1,0 +1,8 @@
+PHASE 3b: ROLLING WINDOW WALK-FORWARD VALIDATION
+DOP — BITS Pilani Hyderabad | EEE | Prof. Arup Ratan
+============================================================
+
+APPROACH:
+  - Train: 2010-2013 | Test date: Dec 14, 2014
+  - Model sees NO data from Dec 14 during training
+  - Walk-forward: at each hour, predict next hour
