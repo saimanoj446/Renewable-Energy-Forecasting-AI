@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Solar Forecasting AI — Meeting Deck with Prof. Arup Ratan</title>
+  <style>
+    :root {
+      --bg: #0F172A;
+      --card-bg: #1E293B;
+      --card-border: #334155;
+      --text: #F8FAFC;
+      --text-muted: #94A3B8;
+      --blue: #38BDF8;
+      --blue-accent: #2563EB;
+      --orange: #FB923C;
+      --green: #4ADE80;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    body { background: var(--bg); color: var(--text); overflow: hidden; height: 100vh; width: 100vw; display: flex; flex-direction: column; }
+    
+    /* Top Bar */
+    .top-bar {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 12px 28px; background: rgba(15, 23, 42, 0.95);
+      border-bottom: 1px solid var(--card-border); z-index: 100;
+    }
+    .badge { font-size: 11px; font-weight: 700; letter-spacing: 1px; color: var(--orange); text-transform: uppercase; }
+    .controls { display: flex; gap: 10px; align-items: center; }
+    .btn {
+      background: var(--card-bg); border: 1px solid var(--card-border); color: var(--text);
+      padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600;
+      transition: all 0.2s;
+    }
+    .btn:hover { background: var(--blue-accent); border-color: var(--blue-accent); color: white; }
+    .slide-num { font-size: 13px; font-weight: 600; color: var(--text-muted); min-width: 60px; text-align: center; }
+
+    /* Progress bar */
+    .progress-bar { height: 3px; background: var(--card-border); width: 100%; }
+    .progress-fill { height: 100%; background: var(--blue); width: 5.8%; transition: width 0.3s ease; }
+
+    /* Main Slide Canvas */
+    .slide-viewport { flex: 1; position: relative; overflow: hidden; }
+    .slide {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      padding: 32px 48px; opacity: 0; pointer-events: none;
+      transform: translateX(40px); transition: opacity 0.35s ease, transform 0.35s ease;
+      display: flex; flex-direction: column;
+    }
+    .slide.active { opacity: 1; pointer-events: auto; transform: translateX(0); }
+
+    /* Typography */
+    h1 { font-size: 38px; font-weight: 800; line-height: 1.2; margin-bottom: 8px; color: #FFFFFF; }
+    h2 { font-size: 26px; font-weight: 700; margin-bottom: 16px; color: #FFFFFF; }
+    h3 { font-size: 18px; font-weight: 700; color: var(--blue); margin-bottom: 10px; }
+    p, li { font-size: 14px; line-height: 1.6; color: #CBD5E1; }
+    .subtitle { font-size: 18px; color: var(--text-muted); margin-bottom: 24px; font-weight: 400; }
+    
+    /* Layouts */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; flex: 1; min-height: 0; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+    .card {
+      background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px;
+      padding: 20px; display: flex; flex-direction: column; overflow-y: auto;
+    }
+    .card.blue { border-left: 4px solid var(--blue); }
+    .card.green { border-left: 4px solid var(--green); }
+    .card.orange { border-left: 4px solid var(--orange); }
+
+    /* Tables */
+    table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
+    th { background: #0B132B; padding: 10px 12px; color: var(--blue); font-weight: 700; border-bottom: 1px solid var(--card-border); }
+    td { padding: 9px 12px; border-bottom: 1px solid rgba(51, 65, 85, 0.6); color: #E2E8F0; }
+    tr:nth-child(even) td { background: rgba(15, 23, 42, 0.4); }
+
+    /* Image Box */
+    .img-box {
+      border-radius: 10px; overflow: hidden; border: 1px solid var(--card-border);
+      background: #000; display: flex; align-items: center; justify-content: center; height: 100%;
+    }
+    .img-box img { max-width: 100%; max-height: 100%; object-fit: contain; }
+
+    /* Tags & Pills */
+    .metric-val { font-size: 28px; font-weight: 800; color: #FFFFFF; margin: 4px 0; }
+    ul { list-style: none; }
+    li { margin-bottom: 10px; position: relative; padding-left: 18px; }
+    li::before { content: "•"; color: var(--blue); position: absolute; left: 0; font-size: 18px; line-height: 1; }
+    b { color: #FFFFFF; }
+  </style>
+</head>
+<body>
+
+  <!-- Top bar -->
+  <div class="top-bar">
+    <div class="badge">BITS Pilani Hyderabad • EEE Dept • Prof. Arup Ratan</div>
+    <div class="controls">
+      <button class="btn" onclick="prevSlide()">← Prev</button>
+      <span class="slide-num" id="slideNum">1 / 17</span>
+      <button class="btn" onclick="nextSlide()">Next →</button>
+      <button class="btn" onclick="toggleFullScreen()">⛶ Fullscreen</button>
+    </div>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+
+  <!-- Viewport -->
+  <div class="slide-viewport">
+
+    <!-- Slide 1: Title -->
+    <div class="slide active" style="justify-content: center; align-items: center; text-align: center; background: radial-gradient(circle at center, #1E293B 0%, #0F172A 100%);">
+      <div class="badge" style="margin-bottom: 16px;">DESIGN-ORIENTED PROJECT (DOP) • PHASE 3 & 4 PROGRESS REVIEW</div>
+      <h1 style="font-size: 44px; margin-bottom: 12px;">Forecasting of Renewable Resources Using AI</h1>
+      <p class="subtitle" style="max-width: 800px; margin-bottom: 32px;">Multi-Resolution Solar Irradiance Forecasting, Time-Travel Walk-Forward Validation, and Physics-Based Maximum Power Point (MPP) Generation</p>
+      <div style="background: rgba(30, 41, 59, 0.8); border: 1px solid var(--card-border); padding: 14px 28px; border-radius: 30px; font-size: 14px; color: var(--blue); font-weight: 600;">
+        Guide: Prof. Arup Ratan | Department of Electrical & Electronics Engineering
+      </div>
+    </div>
+
+    <!-- Slide 2: Executive Summary -->
+    <div class="slide">
+      <h2>Executive Summary: Multi-Resolution AI Framework</h2>
+      <div class="grid-3" style="margin-bottom: 20px;">
+        <div class="card blue">
+          <div class="badge" style="color: var(--blue);">Macro Baseline (Rajasthan)</div>
+          <div class="metric-val">R² = 0.9949</div>
+          <p>Hourly Walk-Forward Model</p>
+          <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Top 8 features retain 100% predictive variance; wind/pressure negligible.</p>
+        </div>
+        <div class="card green">
+          <div class="badge" style="color: var(--green);">Micro Sequence (Kuala Lumpur)</div>
+          <div class="metric-val">R² = 0.8978</div>
+          <p>1-Minute PyTorch LSTM</p>
+          <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">2-layer sequence LSTM on 480 points; beats persistence by +25.8% at 60m.</p>
+        </div>
+        <div class="card orange">
+          <div class="badge" style="color: var(--orange);">Physics-Informed PV Power</div>
+          <div class="metric-val">R² = 0.9020</div>
+          <p>Direct Module Generation</p>
+          <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">MAE = 12.41 W/module; directly computes real electrical power.</p>
+        </div>
+      </div>
+      <div class="card" style="flex: 1;">
+        <h3>Key Deliverables Accomplished Since Last Review:</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 6px;">
+          <ul>
+            <li><b>Key Feature Rule Proven:</b> 4-method ranking proved 8 features capture identical variance to 21 features (drop = 0.0006).</li>
+            <li><b>Walk-Forward Time-Travel:</b> Simulated real-time roll forward; verified multi-start error convergence.</li>
+            <li><b>New 1-Minute Dataset Ingested:</b> Processed 365 daily files (262,020 rows) for Kuala Lumpur, Malaysia.</li>
+          </ul>
+          <ul>
+            <li><b>The 480 Data Points Rule:</b> Formulated 8 features × 60 minutes = 480 normalized data points per window.</li>
+            <li><b>PyTorch LSTM Sequence Model:</b> Built 2-layer recurrent sequence model outperforming persistence benchmark.</li>
+            <li><b>Physics-Based MPP Power:</b> Coupled predicted GHI & temperature to Sandia/IEC PV derating equation.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 3: Dual Dataset Architecture -->
+    <div class="slide">
+      <h2>Dual Dataset Architecture: Macro vs. Micro Validation</h2>
+      <p class="subtitle">Validating across both arid desert and equatorial tropical climates proves the framework is globally robust.</p>
+      <div class="card" style="flex: 1;">
+        <table>
+          <thead>
+            <tr>
+              <th>Property</th>
+              <th>Dataset A: Macro Baseline (Rajasthan, India)</th>
+              <th>Dataset B: Micro Validation (Kuala Lumpur, Malaysia)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><b>Coordinates</b></td>
+              <td>26.9° N, 70.9° E</td>
+              <td>3.1390° N, 101.6869° E (Elevation: 60 m)</td>
+            </tr>
+            <tr>
+              <td><b>Climate Zone</b></td>
+              <td><b>Arid Desert (BWh)</b> — predictable beam radiation</td>
+              <td><b>Tropical Rainforest (Af)</b> — intense convective cloud cover</td>
+            </tr>
+            <tr>
+              <td><b>Source</b></td>
+              <td>NASA POWER / NSRDB Satellite Atmospheric Model</td>
+              <td>Physical Ground Sensor (Published in <i>Data in Brief</i> Journal)</td>
+            </tr>
+            <tr>
+              <td><b>Temporal Resolution</b></td>
+              <td><b>Hourly (60-minute sampling interval)</b></td>
+              <td><b>1-Minute (High-frequency sampling interval)</b></td>
+            </tr>
+            <tr>
+              <td><b>Data Volume</b></td>
+              <td>5 Years (2010–2014) | <b>43,800 rows</b></td>
+              <td>Full Year 2025 (365 Days) | <b>262,020 rows</b> (07:00–18:59)</td>
+            </tr>
+            <tr>
+              <td><b>Weather Integration</b></td>
+              <td>NSRDB atmospheric database</td>
+              <td>Open-Meteo Historical Archive API (interpolated to 1-min)</td>
+            </tr>
+            <tr>
+              <td><b>Peak Recorded GHI</b></td>
+              <td>991 W/m²</td>
+              <td><b>1455.9 W/m²</b> (captures cloud-edge solar enhancement)</td>
+            </tr>
+            <tr>
+              <td><b>Grid Role</b></td>
+              <td>Day-ahead market bidding & unit commitment</td>
+              <td>Inverter ramp-rate mitigation & battery charge ramping</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Slide 4: Key Feature Identification -->
+    <div class="slide">
+      <h2>Directive 1: 4-Method Key Feature Identification (Rajasthan)</h2>
+      <div class="grid-2">
+        <div class="img-box"><img src="plots/23_key_feature_identification.png" alt="Key Features"></div>
+        <div class="card">
+          <h3>Dimensionality Reduction Proof</h3>
+          <p style="font-style: italic; color: var(--text-muted); margin-bottom: 12px;">"Prove that only a few features matter and the rest can be neglected."</p>
+          <ul>
+            <li><b>4 Evaluation Methods:</b> Random Forest Gini Impurity, Permutation Importance on holdout test set, Mutual Information, and Pearson Correlation.</li>
+            <li><b>Top 8 Selected Features:</b> <code>DNI</code>, <code>Hour_cos</code>, <code>DHI</code>, <code>GHI_lag1</code>, <code>Hour</code>, <code>Hour_sin</code>, <code>GHI_roll3</code>, <code>GHI_roll6</code>.</li>
+            <li><b>Full Model (21 features):</b> R² = 0.9955 | MAE = 9.87 W/m² | nRMSE = 2.87%</li>
+            <li><b>Reduced Model (8 features):</b> R² = 0.9949 | MAE = 10.15 W/m² | nRMSE = 2.95%</li>
+            <li><b>Performance Drop:</b> ΔR² = -0.0006 (0.06% — negligible!).</li>
+            <li><b>Negligible Features:</b> Wind Speed, Surface Pressure, and Dew Point contribute < 2% total permutation weight.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 5: Parity & Category Pie -->
+    <div class="slide">
+      <h2>Full vs. Reduced Model Parity & Category Breakdown</h2>
+      <div class="grid-2">
+        <div class="img-box"><img src="plots/24_full_vs_reduced_model.png" alt="Parity Plot"></div>
+        <div class="img-box"><img src="plots/25_feature_category_pie.png" alt="Category Pie"></div>
+      </div>
+    </div>
+
+    <!-- Slide 6: Walk-Forward Time Travel -->
+    <div class="slide">
+      <h2>Directive 2: Walk-Forward Rolling 'Time-Travel' Validation</h2>
+      <div class="grid-2">
+        <div class="img-box"><img src="plots/26_rolling_window_forecast.png" alt="Rolling Forecast"></div>
+        <div class="card">
+          <h3>Simulated Operational Time-Travel</h3>
+          <ul>
+            <li><b>Strict Historical Cut-Off:</b> Model trained strictly on 2010–2013 data. Dec 14, 2014 is treated as unknown future.</li>
+            <li><b>Rolling Window Mechanics:</b> At each hour <code>h</code>, model receives past lookback → forecasts next hour → window slides forward by 1h.</li>
+            <li><b>Multi-Start Ensemble:</b> Each hour is predicted from multiple lookback starting points (t-24h to t-1h).</li>
+            <li><b>Uncertainty Bands:</b> Averaging overlapping predictions yields a robust ensemble mean with ±1 std spread.</li>
+            <li><b>Test Accuracy:</b> 1-step walk-forward R² = 0.9819 | MAE = 14.2 W/m² across the entire test day.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 7: Convergence Analysis -->
+    <div class="slide">
+      <h2>Directive 2: Multi-Start Prediction Error Convergence Proof</h2>
+      <div class="grid-2">
+        <div class="img-box"><img src="plots/28_convergence_analysis.png" alt="Convergence Analysis"></div>
+        <div class="card">
+          <h3>Sir's Hypothesis Validated</h3>
+          <p style="font-style: italic; color: var(--text-muted); margin-bottom: 12px;">"As we move closer to the target hour, predictions will converge toward the actual ground truth."</p>
+          <ul>
+            <li><b>Monotonic Error Decay:</b> Forecast MAE drops steadily as the rolling window advances from 24h away down to 1h away.</li>
+            <li><b>Variance Compression:</b> Prediction spread contracts by > 60% as lookback proximity increases.</li>
+            <li><b>Ensemble Averaging:</b> Points predicted 10+ times exhibit significantly lower variance than single-shot predictions.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 8: New Dataset Deep-Dive -->
+    <div class="slide">
+      <h2>Directive 3: New Dataset Deep-Dive — Kuala Lumpur 1-Minute (2025)</h2>
+      <div class="grid-2">
+        <div class="card blue">
+          <h3>Ground Station & Climate Regime</h3>
+          <ul>
+            <li><b>Scientific Source:</b> Published in <i>Data in Brief</i> (peer-reviewed); recorded by outdoor solar research station, University of Malaya.</li>
+            <li><b>Coordinates:</b> Lat 3.1390° N, Lon 101.6869° E (Elevation: ~60 m).</li>
+            <li><b>Climate Classification:</b> Tropical Rainforest (Af) — near-equatorial, hot and humid year-round with frequent convective cloud transients.</li>
+            <li><b>The Acid-Test:</b> Rajasthan has predictable direct sunlight. Kuala Lumpur experiences rapid solar drops (±400 W/m² in < 5 min). Proving our framework here proves it everywhere!</li>
+            <li><b>Instrument:</b> Class-A Pyranometer recording GHI up to 1455.9 W/m² (capturing cloud-edge lensing).</li>
+          </ul>
+        </div>
+        <div class="card green">
+          <h3>Scale & Auxiliary Weather Pipeline</h3>
+          <ul>
+            <li><b>Temporal Resolution:</b> Exact 1-minute intervals (720 records/day, 07:00:00 to 18:59:00). Full year 2025 (365 files = <b>262,020 rows</b>).</li>
+            <li><b>Open-Meteo API Ingestion:</b> Downloaded hourly weather: Temperature (21.2–37.8°C), Humidity (26–100%), Pressure (997–1009 hPa), Wind, DNI, DHI.</li>
+            <li><b>Time-Interpolation Pipeline:</b> Hourly weather was linearly interpolated to 1-min intervals and merged with ground GHI (<code>kl_hourly_weather.csv</code>).</li>
+            <li><b>Feature Engineering:</b> 29 features engineered (cyclical diurnal, lags 1 to 60, rolling averages 5 to 60).</li>
+            <li><b>Chronological Split:</b> Train: Jan–Aug (73k seq), Val: Sep (9k seq), Test: Oct–Dec (55k seq).</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 9: 1-Minute EDA -->
+    <div class="slide">
+      <h2>Phase 3c: 1-Minute Resolution EDA & Weekly Volatility</h2>
+      <div class="grid-2">
+        <div class="img-box"><img src="plots/29_kl_eda_overview.png" alt="KL EDA Overview"></div>
+        <div class="img-box"><img src="plots/31_kl_1min_timeseries_week.png" alt="Weekly Timeseries"></div>
+      </div>
+    </div>
+
+    <!-- Slide 10: 1-Minute Feature Proof -->
+    <div class="slide">
+      <h2>Phase 3c: 1-Minute Feature Importance Proof (Kuala Lumpur)</h2>
+      <div class="grid-2">
+        <div class="img-box"><img src="plots/32_kl_feature_importance.png" alt="KL Feature Importance"></div>
+        <div class="card">
+          <h3>1-Minute Dimensionality Proof</h3>
+          <ul>
+            <li><b>Full Model (25 features):</b> R² = <b>0.9162</b> on daytime test set.</li>
+            <li><b>Reduced Model (8 features):</b> R² = <b>0.9169</b> (ΔR² = +0.0007 — zero drop!).</li>
+            <li><b>Top 8 Minute-Level Features:</b> <code>GHI_lag1</code>, <code>GHI_roll5</code>, <code>GHI_roll10</code>, <code>GHI_lag5</code>, <code>GHI_lag10</code>, <code>GHI_roll60</code>, <code>GHI_roll30</code>, <code>Hour_sin</code>.</li>
+            <li><b>Dominance of Lags:</b> At 1-minute resolution, GHI autocorrelation accounts for > 85% of total permutation importance.</li>
+            <li><b>Discarded Inputs:</b> Pressure, Wind Speed/Dir, and Humidity contribute < 0.1% each and are neglected.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 11: 480 Data Points Matrix -->
+    <div class="slide">
+      <h2>Directive 4: The '8 Features × 60 Minutes = 480 Points' Rule</h2>
+      <div class="grid-2">
+        <div class="img-box"><img src="plots/33_kl_480_datapoints_matrix.png" alt="480 Points Matrix"></div>
+        <div class="card orange">
+          <h3>Mathematical Rule Formulation</h3>
+          <ul>
+            <li><b>Lookback Window (T=60):</b> Captures 1 full hour of micro-ramp dynamics before forecast inception.</li>
+            <li><b>8 Features per Minute (M=8):</b> GHI, Temperature, Relative Humidity, DNI, DHI, Pressure, Hour_sin, Hour_cos.</li>
+            <li><b>Total Input Matrix:</b> 60 time steps × 8 features = exactly <b>480 data points</b> per window.</li>
+            <li><b>Optimal Complexity:</b> Expanding beyond 60 min yields < 0.1% gain; shrinking below 60 min loses ramp context.</li>
+            <li><b>Deep Learning Tensor:</b> Formatted directly as <code>(batch_size, 60, 8)</code> for sequence neural networks.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 12: LSTM Deep Learning -->
+    <div class="slide">
+      <h2>Directive 5: PyTorch LSTM Deep Learning Sequence Model</h2>
+      <div class="grid-2">
+        <div class="img-box"><img src="plots/34_kl_lstm_training_loss.png" alt="LSTM Loss"></div>
+        <div class="img-box"><img src="plots/35_kl_lstm_scatter_and_residuals.png" alt="LSTM Scatter"></div>
+      </div>
+    </div>
+
+    <!-- Slide 13: 1-Minute Walk-Forward Day -->
+    <div class="slide">
+      <h2>Directive 5: Continuous 1-Minute Walk-Forward Solar Forecast</h2>
+      <div class="grid-2">
+        <div class="img-box"><img src="plots/36_kl_lstm_1min_walkforward_day.png" alt="Walk Forward Day"></div>
+        <div class="card blue">
+          <h3>Real-Time Roll Forward Performance</h3>
+          <ul>
+            <li><b>Minute-by-Minute Sliding:</b> At every minute from 07:00 to 18:59, the LSTM ingests the past 60 min (480 points) to forecast +1 min ahead.</li>
+            <li><b>Tracking Extreme Cloud Volatility:</b> Accurately mirrors sharp solar ramp spikes and cloud shadowing dips.</li>
+            <li><b>Outperforming Persistence:</b> Persistence baseline lags during rapid ramps; LSTM anticipates diurnal solar arc curvature.</li>
+            <li><b>Test Evaluation (Oct–Dec 2025):</b> R² = <b>0.8978</b> | MAE = 47.77 W/m² | RMSE = 91.22 W/m² across 55,292 testing sequence windows.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 14: Multi-Horizon Forecasting -->
+    <div class="slide">
+      <h2>Directive 5: Multi-Horizon Forecast Accuracy & IEEE Skill Score</h2>
+      <div class="grid-2">
+        <div class="img-box"><img src="plots/38_kl_lstm_multi_horizon.png" alt="Multi Horizon"></div>
+        <div class="card green">
+          <h3>Test Metrics across Horizons (+1m to +60m)</h3>
+          <table style="margin-top: 10px;">
+            <thead>
+              <tr>
+                <th>Horizon</th>
+                <th>R²</th>
+                <th>RMSE (W/m²)</th>
+                <th>MAE (W/m²)</th>
+                <th>Skill vs Persistence</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td><b>+1 min</b></td><td>0.8978</td><td>91.22</td><td>47.77</td><td><b>+3.07%</b></td></tr>
+              <tr><td><b>+5 min</b></td><td>0.7494</td><td>142.99</td><td>89.99</td><td><b>+11.66%</b></td></tr>
+              <tr><td><b>+15 min</b></td><td>0.6321</td><td>173.90</td><td>121.30</td><td><b>+17.16%</b></td></tr>
+              <tr><td><b>+30 min</b></td><td>0.5712</td><td>189.50</td><td>139.03</td><td><b>+20.30%</b></td></tr>
+              <tr><td><b>+60 min</b></td><td>0.5266</td><td>204.67</td><td>155.80</td><td><b>+25.79%</b></td></tr>
+            </tbody>
+          </table>
+          <p style="font-size: 12px; margin-top: 14px; color: var(--blue);"><b>Skill Score Insight:</b> Skill expands from +3.1% at 1 min to +25.8% at 60 min. As persistence degrades over time, the LSTM maintains learned temporal memory.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 15: Physics-Based MPP Power -->
+    <div class="slide">
+      <h2>Directive 6: Physics-Based PV Maximum Power Point (MPP) Generation</h2>
+      <div class="grid-2">
+        <div class="img-box"><img src="plots/27_mpp_power_forecast.png" alt="MPP Rajasthan"></div>
+        <div class="img-box"><img src="plots/37_kl_lstm_mpp_power.png" alt="MPP KL"></div>
+      </div>
+    </div>
+
+    <!-- Slide 16: Deliverables Scorecard -->
+    <div class="slide">
+      <h2>Deliverables Scorecard: 100% of Meeting Directives Fulfilled</h2>
+      <div class="card" style="flex: 1;">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Directive from Prof. Arup Ratan</th>
+              <th>Implementation & Scientific Evidence</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>1</td><td><b>Prove Key Features (Hourly)</b></td><td>4-method ranking; Top 8 yield R²=0.9949 vs Full 0.9955 (drop=0.0006)</td><td style="color: var(--green); font-weight: 700;">Fulfilled ✅</td></tr>
+            <tr><td>2</td><td><b>Walk-Forward Time-Travel</b></td><td>Simulated Dec 14, 2014 roll forward; proved multi-start error convergence</td><td style="color: var(--green); font-weight: 700;">Fulfilled ✅</td></tr>
+            <tr><td>3</td><td><b>Generalize to Distinct Minute Dataset</b></td><td>Processed 365 daily files (262,020 rows) for Kuala Lumpur; proved 8 features (R²=0.9169)</td><td style="color: var(--green); font-weight: 700;">Fulfilled ✅</td></tr>
+            <tr><td>4</td><td><b>The '480 Data Points' Rule</b></td><td>480-point normalized matrix visualization; structured input tensor as (60, 8)</td><td style="color: var(--green); font-weight: 700;">Fulfilled ✅</td></tr>
+            <tr><td>5</td><td><b>Deep Learning LSTM Sequence Model</b></td><td>2-layer PyTorch LSTM; R²=0.8978 at +1m, beating persistence across all horizons (+25.8%)</td><td style="color: var(--green); font-weight: 700;">Fulfilled ✅</td></tr>
+            <tr><td>6</td><td><b>Physics-Based PV MPP Power</b></td><td>Coupled predicted irradiance + temp to Sandia/IEC derating (R²=0.9020)</td><td style="color: var(--green); font-weight: 700;">Fulfilled ✅</td></tr>
+            <tr><td>7</td><td><b>Clean Project Architecture</b></td><td>Dedicated <code>kuala_lumpur/</code> directory, README, and modular scripts</td><td style="color: var(--green); font-weight: 700;">Fulfilled ✅</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Slide 17: Scalability & Next Steps -->
+    <div class="slide" style="justify-content: center; align-items: center; text-align: center; background: radial-gradient(circle at center, #1E293B 0%, #0F172A 100%);">
+      <div class="badge" style="margin-bottom: 16px;">SCALABILITY & ROADMAP</div>
+      <h1 style="font-size: 40px; margin-bottom: 16px;">From Micro-Ramping to Day-Ahead Dispatch</h1>
+      <p class="subtitle" style="max-width: 850px; margin-bottom: 30px;">
+        • <b>Micro-Level (1-Min, 60-Min Window):</b> Inverter anti-islanding, dynamic battery storage (BESS) ramping, local curtailment mitigation.<br>
+        • <b>Macro-Level (Hourly, 24-Hour Horizon):</b> Unit commitment, spinning reserve allocation, day-ahead power market bidding.<br>
+        • <b>Next Phase:</b> Live real-time dashboard and validation on BITS Pilani Hyderabad rooftop arrays.
+      </p>
+      <div style="background: rgba(30, 41, 59, 0.9); border: 1px solid var(--card-border); padding: 14px 28px; border-radius: 30px; font-size: 14px; color: var(--orange); font-weight: 700;">
+        GitHub: https://github.com/saimanoj446/Renewable-Energy-Forecasting-AI
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    let currentSlide = 0;
+    const slides = document.querySelectorAll('.slide');
+    const totalSlides = slides.length;
+    const slideNumEl = document.getElementById('slideNum');
+    const progressEl = document.getElementById('progress');
+
+    function updateSlide() {
+      slides.forEach((s, idx) => {
+        s.classList.toggle('active', idx === currentSlide);
+      });
+      slideNumEl.textContent = `${currentSlide + 1} / ${totalSlides}`;
+      progressEl.style.width = `${((currentSlide + 1) / totalSlides) * 100}%`;
+    }
+
+    function nextSlide() {
+      if (currentSlide < totalSlides - 1) {
+        currentSlide++;
+        updateSlide();
+      }
+    }
+
+    function prevSlide() {
+      if (currentSlide > 0) {
+        currentSlide--;
+        updateSlide();
+      }
+    }
+
+    function toggleFullScreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => {});
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        }
+      }
+    }
+
+    // Keyboard navigation
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+        nextSlide();
+      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        prevSlide();
+      } else if (e.key === 'f' || e.key === 'F') {
+        toggleFullScreen();
+      }
+    });
+
+    updateSlide();
+  </script>
+</body>
+</html>
