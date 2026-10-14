@@ -463,7 +463,18 @@ for title, desc in rule_bullets:
     run = p.add_run(); run.text = desc; run.font.bold = False; run.font.color.rgb = SLATE_DARK
 
 # ═════════════════════════════════════════════════════════════
-# SLIDE 12: Phase 3d — PyTorch LSTM Sequence Forecasting
+# SLIDE 12: Phase 3d — High-Level LSTM Architecture Flowchart
+# ═════════════════════════════════════════════════════════════
+slide12_flow = prs.slides.add_slide(blank_layout)
+set_slide_background(slide12_flow, BG_LIGHT)
+add_header(slide12_flow, "Phase 3d: High-Level Architecture & Working of 2-Layer LSTM")
+
+img_flowchart = os.path.join(PLOTS_DIR, '39_lstm_architecture_flowchart.png')
+if os.path.exists(img_flowchart):
+    slide12_flow.shapes.add_picture(img_flowchart, Inches(0.8), Inches(1.5), Inches(11.733), Inches(5.55))
+
+# ═════════════════════════════════════════════════════════════
+# SLIDE 13: Phase 3d — PyTorch LSTM Sequence Forecasting
 # ═════════════════════════════════════════════════════════════
 slide12 = prs.slides.add_slide(blank_layout)
 set_slide_background(slide12, BG_LIGHT)
@@ -641,5 +652,10 @@ p_git.text = "GitHub Repository: https://github.com/saimanoj446/Renewable-Energy
 p_git.font.size = Pt(12); p_git.font.bold = True; p_git.font.color.rgb = ORANGE; p_git.space_before = Pt(24)
 
 # Save
-prs.save(OUTPUT_PPTX)
-print(f"Presentation saved successfully to: {OUTPUT_PPTX}")
+try:
+    prs.save(OUTPUT_PPTX)
+    print(f"Presentation saved successfully to: {OUTPUT_PPTX}")
+except PermissionError:
+    alt_pptx = os.path.join(BASE_DIR, 'Solar_Forecasting_Prof_Meeting_v2.pptx')
+    prs.save(alt_pptx)
+    print(f"Original PPTX is open in PowerPoint. Saved updated deck to: {alt_pptx}")

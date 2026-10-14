@@ -350,9 +350,28 @@
       </div>
     </div>
 
-    <!-- Slide 12: LSTM Deep Learning -->
+    <!-- Slide 12: LSTM Working & High-Level Architecture Flowchart -->
     <div class="slide">
-      <h2>Directive 5: PyTorch LSTM Deep Learning Sequence Model</h2>
+      <h2>Directive 5: High-Level Architecture & Working of LSTM Model</h2>
+      <div class="grid-2">
+        <div class="img-box"><img src="plots/39_lstm_architecture_flowchart.png" alt="LSTM Flowchart"></div>
+        <div class="card blue">
+          <h3>How the LSTM Processes the 480 Points</h3>
+          <ul>
+            <li><b>Solves Vanishing Gradients:</b> Standard RNNs decay to 0 over 60 steps. LSTM's <b>Cell State Highway ($C_t$)</b> carries memory across 60 minutes via linear additive updates.</li>
+            <li><b>Forget Gate ($f_t$):</b> Discards stale information (e.g., flushes nighttime baselines when morning breaks).</li>
+            <li><b>Input Gate ($i_t$):</b> Injects sudden weather changes (e.g., cloud ramp depressions) into long-term memory.</li>
+            <li><b>Output Gate ($o_t$):</b> Filters cell memory into short-term hidden state $\mathbf{h}_t$.</li>
+            <li><b>Multi-Horizon Projection:</b> The final 64-D vector $\mathbf{h}_{60}$ projects simultaneously to 5 horizons (+1m to +60m), achieving <b>+25.8% skill improvement</b> at 1 hour.</li>
+            <li><b>Physics Translation:</b> Predicts electrical Watts ($P_{\text{mpp}}$, $R^2=0.9020$) via Sandia/IEC PV cell equations.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 13: LSTM Deep Learning Model -->
+    <div class="slide">
+      <h2>Directive 5: PyTorch LSTM Training Convergence & Residuals</h2>
       <div class="grid-2">
         <div class="img-box"><img src="plots/34_kl_lstm_training_loss.png" alt="LSTM Loss"></div>
         <div class="img-box"><img src="plots/35_kl_lstm_scatter_and_residuals.png" alt="LSTM Scatter"></div>

@@ -393,7 +393,32 @@ This helps Random Forest understand that 11 PM and midnight are close in time.
 
 ---
 
-## Slide 20: Phase 3d — PyTorch LSTM Sequence Forecasting
+## Slide 20: High-Level Architecture & Working of LSTM Sequence Model
+
+**Overview of the 3-Stage Pipeline:**
+1. **Stage 1: Input Sequence Tensor (The 480 Points)**
+   - Matrix shape: $(60, 8)$ representing 60 time steps $\times$ 8 key physical features.
+   - Batch shape: `(batch_size, 60, 8)` fed into the PyTorch LSTM.
+
+2. **Stage 2: Inside the LSTM Recurrent Cell (Gates & Conveyor Belt)**
+   - **Cell State Highway ($C_t$):** Long-term memory conveyor belt running across all 60 minutes.
+   - **Additive Gradient Flow ($C_t = f_t \odot C_{t-1} + i_t \odot \tilde{C}_t$):** Linear addition prevents vanishing gradients, enabling retention over 60 time steps where standard RNNs fail.
+   - **Forget Gate ($f_t = \sigma$):** Flushes stale information (e.g. night-to-day transitions).
+   - **Input Gate ($i_t = \sigma \odot \tanh$):** Injects sudden cloud transients into memory.
+   - **Output Gate ($o_t = \sigma$):** Distills memory into short-term hidden state $h_t$.
+   - **Stacked 2-Layer PyTorch Architecture:** Layer 1 (8 $\rightarrow$ 64) $\rightarrow$ Dropout(0.2) $\rightarrow$ Layer 2 (64 $\rightarrow$ 64).
+   - Step $t=60$ hidden vector $\mathbf{h}_{60} \in \mathbb{R}^{64}$ summarizes the full 480-point window.
+
+3. **Stage 3: Forecast Head & Power Conversion**
+   - **Linear Projection Head:** $\hat{\mathbf{y}} = \mathbf{W} \mathbf{h}_{60} + \mathbf{b}$ maps to 5 discrete horizons (+1m to +60m).
+   - **Physics-Based PV Power ($P_{\text{mpp}}$):** Sandia/IEC thermal cell derating equations translate irradiance to electrical Watts ($R^2 = 0.9020$).
+
+**Key Plot:**
+- `plots/39_lstm_architecture_flowchart.png` — High-level architecture and working flowchart
+
+---
+
+## Slide 21: Phase 3d — PyTorch LSTM Sequence Forecasting
 
 **Deep Learning Model Implementation:**
 - **Architecture:** 2-Layer LSTM (Hidden size = 64, Dropout = 0.2, PyTorch 2.8 CPU).
@@ -420,7 +445,7 @@ This helps Random Forest understand that 11 PM and midnight are close in time.
 
 ---
 
-## Slide 21: Physics-Based PV Maximum Power Point (MPP) Generation
+## Slide 22: Physics-Based PV Maximum Power Point (MPP) Generation
 
 **Thermodynamic Derating Model (Sandia / IEC):**
 $$T_{\text{cell}} = T_{\text{amb}} + \frac{\text{NOCT} - 20}{800} \times \text{GHI}$$
@@ -439,7 +464,7 @@ $$P_{\text{mpp}} = P_{\text{stc}} \times \left(\frac{\text{GHI}}{1000}\right) \t
 
 ---
 
-## Slide 22: Deliverables Scorecard (100% Fulfilled)
+## Slide 23: Deliverables Scorecard (100% Fulfilled)
 
 | No. | Deliverable Asked by Sir | Status | Evidence / Script / Plot |
 |---|---|---|---|
@@ -453,7 +478,7 @@ $$P_{\text{mpp}} = P_{\text{stc}} \times \left(\frac{\text{GHI}}{1000}\right) \t
 
 ---
 
-## Slide 23: Scalability & Next Steps
+## Slide 24: Scalability & Next Steps
 
 **Scalability Mechanism (Minute-to-Hour Framework):**
 - **Micro Level (1-minute resolution, 60-min window):** Designed for inverter anti-islanding, dynamic ramp-rate mitigation, and battery storage charging control.
@@ -465,7 +490,7 @@ $$P_{\text{mpp}} = P_{\text{stc}} \times \left(\frac{\text{GHI}}{1000}\right) \t
 
 ---
 
-## Slide 24: Thank You & Discussion
+## Slide 25: Thank You & Discussion
 
 **Project GitHub Repository:**  
 https://github.com/saimanoj446/Renewable-Energy-Forecasting-AI
