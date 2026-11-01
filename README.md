@@ -118,3 +118,28 @@ python kuala_lumpur/08_lstm_forecast.py
 # Run the Phase 5 Satellite-Enhanced LightGBM model:
 python kuala_lumpur/12_phase5_satellite_lightgbm.py
 ```
+
+---
+
+## 🔮 Phase 6 & 7 Roadmap (Next Meeting / Future Work)
+
+### 1. Upwind Spatial Advection & Advanced Feature Physics (Breaking the $t+60$ Ceiling)
+- **$5 \times 5$ Spatial Satellite Grid Patches:** Ingest Himawari-8/9 geostationary channels (Band 03 visible albedo + Band 13 IR cloud-top temperature at 10-min, 2 km resolution) over a spatial patch. Project upwind cloud vectors: $\vec{x}_{\text{upwind}} = \vec{x}_{\text{station}} - \vec{v}_{850\text{hPa}} \cdot \Delta t$.
+- **Cloud Enhancement & Volatility Index ($VI$):** Account for forward Mie scattering ($k_t > 1.2$) and high-frequency ramp volatility ($\sigma(\Delta GHI_{1\text{m}})$).
+- **Causal Wavelet / VMD Decomposition:** Split 1-minute GHI into intrinsic diurnal, mesoscale cloud, and microscale turbulence frequency bands.
+
+### 2. Next-Generation Architectures
+- **Stacking Hybrid:** Combine Phase 4c 64-dim LSTM sequence embeddings with Phase 5 satellite features in LightGBM.
+- **Temporal Fusion Transformer (TFT) & PatchTST:** Native separation of past observed sequences and known future astronomy ($GHI_{\text{clear}}$).
+- **Asymmetric Physics-Guided Ramp Loss:** Custom objective heavily penalizing missed sharp drop-offs and non-physical values.
+
+### 3. Conformal Probabilistic Quantile Forecasting (High IEEE Value)
+- Multi-quantile LightGBM / CatBoost ($\alpha \in \{0.10, 0.50, 0.90\}$) producing an 80% Prediction Interval $[\hat{q}_{10}, \hat{q}_{90}]$.
+- **Conformalized Quantile Regression (CQR):** Guarantees exact empirical coverage without Gaussian residual assumptions.
+- Metrics: PICP ($\ge 80\%$), PINAW (band sharpness), and Continuous Ranked Probability Score (CRPS).
+
+### 4. Power Systems Integration: BESS Ramp-Rate Smoothing & Grid Stability
+- **IEEE 1547 / Malaysian Grid Code Compliance:** Enforcing a $\pm 10\%/\text{min}$ maximum ramp-rate limit on a simulated 10 MW PV plant.
+- **Predictive Model Predictive Control (MPC):** Using $+5\text{m}, +15\text{m}, +60\text{m}$ forecasts and lower quantile $\hat{q}_{10}$ to pre-charge/discharge the BESS before cloud arrival.
+- **Quantifiable Outcome:** Demonstrate a 25–35% reduction in required battery capacity (MWh) compared to reactive low-pass filtering.
+

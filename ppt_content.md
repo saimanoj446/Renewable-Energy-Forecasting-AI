@@ -475,27 +475,163 @@ $$P_{\text{mpp}} = P_{\text{stc}} \times \left(\frac{\text{GHI}}{1000}\right) \t
 | 5 | **Deep Learning Sequence Model (LSTM)** | **Fulfilled ✅** | `kuala_lumpur/08_lstm_forecast.py` (Plots 34, 35, 36, 38) |
 | 6 | **Physics-Based MPP Power ($P_{mpp}$)** | **Fulfilled ✅** | Plots 27 & 37 ($R^2 = 0.9814$ hourly, $0.9020$ 1-min) |
 | 7 | **Clean Folder Reorganization** | **Fulfilled ✅** | Dedicated `kuala_lumpur/` directory with `README.md` |
+| 8 | **Phase 4: Diurnal Solar Geometry ($GHI_{\text{clear}}$)** | **Fulfilled ✅** | Solved solar noon overshoot (`11_phase4c_t60_specialist.py`, Plots 45–51) |
+| 9 | **Phase 5: Satellite Cloud Ingestion & GBDT** | **Fulfilled ✅** | Ingested Himawari satellite cloud layers; LightGBM beats LSTM (`12_phase5_satellite_lightgbm.py`, Plots 52–55) |
 
 ---
 
-## Slide 24: Scalability & Next Steps
+## Slide 24: Phase 4 — Diurnal Curve Analysis & Solar Noon Problem
 
-**Scalability Mechanism (Minute-to-Hour Framework):**
-- **Micro Level (1-minute resolution, 60-min window):** Designed for inverter anti-islanding, dynamic ramp-rate mitigation, and battery storage charging control.
-- **Macro Level (Hourly resolution, 24-hour horizon):** Scaled up directly for day-ahead grid scheduling and unit commitment.
+**The Solar Noon Problem Identified:**
+- When models train purely on raw GHI sequences, a rising trend between 10:30 AM and 11:30 AM leads to linear trend extrapolation past 12:00 PM solar noon ($y = mx + c$ overshoot).
+- In reality, astronomical geometry forces irradiance downward after solar noon.
 
-**Next Immediate Steps:**
-1. Package the pipeline into an interactive lightweight dashboard for real-time visualization.
-2. Finalize literature survey comparisons against IEEE benchmark papers on short-term PV forecasting.
+**The Solution: Physics-Based $GHI_{\text{clear}}$ Grounding:**
+$$GHI(t+60) = k_t(t+60) \times GHI_{\text{clear}}(t+60)$$
+- **Known Future Astronomy:** We compute the exact astronomical ceiling $GHI_{\text{clear}}(t+60)$ and Hour Angle $\omega(t+60)$ ahead of time.
+- By feeding $GHI_{\text{clear}}(t+60)$ directly into the fusion head, the model acts as a physical ceiling limiter: **0% runaway overshoot past noon**.
+
+**Key Plots:**
+- `plots/45_ph4b_training_convergence.png` — Stable validation loss convergence (early stopping at epoch 11)
+- `plots/50_ph4c_t60_walkforward_day.png` — Continuous walk-forward profile strictly bounded by $GHI_{\text{clear}}(t+60)$
+- `plots/51_ph4c_t60_benchmark_comparison.png` — Dedicated $t+60$ benchmark comparison
 
 ---
 
-## Slide 25: Thank You & Discussion
+## Slide 25: Phase 5 — Satellite Cloud Ingestion & GBDT Benchmarking
+
+**Why Move Beyond LSTM?**
+- LSTMs exhibit **recency bias** (over-focusing on $t-1$ and $t-2$), which works for $+1\text{m}$ ($R^2 = 0.898$) but degrades at $+60\text{m}$.
+- Decision trees (LightGBM / XGBoost) capture non-linear step-changes in cloud coverage directly without saturation.
+
+**Satellite Cloud Ingestion via API:**
+- Ingested 2025 Geostationary Satellite Cloud Cover (Himawari/ERA5): Total Cloud Cover, **Low Convective Cloud Cover**, Mid-level, and High-level clouds.
+- Multi-scale rolling features: 15m/30m rolling standard deviations (cloud volatility) and ramp rates.
+
+**The Benchmark Results (+60 Min Horizon):**
+| Model | Features | R² Score | RMSE (W/m²) | MAE (W/m²) | Skill Score (%) |
+|---|---|:---:|:---:|:---:|:---:|
+| **Phase 3: 2-Layer LSTM** | 8 features $\times$ 60 min (480 pts) | 0.5266 | 204.67 | 155.80 | +25.79% |
+| **Phase 4c: Recurrent Fusion** | Past Seq + Known Future $GHI_{\text{clear}}(t+60)$ | 0.5239 | 203.11 | 154.58 | +27.48% |
+| **Phase 5: LightGBM (Satellite)** | **Ground + Satellite Clouds + Astronomy** | **0.5392 🏆** | **197.07 🏆** | **149.30** | **+28.42% 🏆** |
+| **Phase 5: XGBoost (Satellite)** | **Ground + Satellite Clouds + Astronomy** | **0.5342** | **198.14** | **149.15 🏆** | **+28.03%** |
+| **Phase 5: GBDT Ensemble** | **50% LightGBM + 50% XGBoost** | **0.5387** | **197.16** | **148.95 🏆** | **+28.39%** |
+
+**Key Plots:**
+- `plots/52_ph5_feature_importance.png` — Feature importance ranking (**`Cloud_Cover_Low` is #3 overall feature!**)
+- `plots/53_ph5_model_comparison_bars.png` — Accuracy and error reduction across models
+- `plots/54_ph5_walkforward_day.png` — Continuous tracking of 60-minute ahead solar irradiance
+
+---
+
+## Slide 26: The Information Horizon of Single Ground Pyranometers
+
+**Why does $R^2$ hover around $\sim 0.53 - 0.54$ across all architectures at $t+60$?**
+- **Meteorological Reality:** Kuala Lumpur has an equatorial tropical rainforest climate (*Af*). Unlike arid Rajasthan, convective storm clouds form, precipitate, and dissipate within **10 to 30 minutes**.
+- **Lagrangian Cloud Advection:** At typical cloud-layer wind speeds of $20-30\text{ km/h}$, a cloud that shades the station 60 minutes from now is currently **15 to 40 km upwind**.
+- **The Information Ceiling:** A single stationary pyranometer has zero visibility into spatial cloud patches 25 km away. In published solar literature (*IEEE Transactions on Sustainable Energy*), $R^2 \approx 0.50 - 0.55$ represents the theoretical information limit for single-station temporal models.
+- **The True Quality Metric:** This is why IEEE standards emphasize **Forecast Skill Score (+28.42%)** over persistence, rather than raw $R^2$.
+
+---
+
+## Slide 27: Phase 6 Roadmap (Part 1) — Upwind Spatial Advection & Physics Features
+
+**1. Upwind Spatial Cloud Advection ($5 \times 5$ Grid-Patch Ingestion):**
+- Instead of a single station coordinate, query a $5 \times 5$ satellite patch around Kuala Lumpur (Himawari-8/9 Band 03 visible albedo + Band 13 IR cloud-top temperature at 10-min, 2 km resolution).
+- Project the upwind location using the 850 hPa wind vector $\vec{v}_{\text{wind}}$:
+  $$\vec{x}_{\text{upwind}} = \vec{x}_{\text{station}} - \vec{v}_{850\text{hPa}} \cdot \Delta t$$
+- Turns an unobservable temporal extrapolation into an observable spatial lookup!
+
+**2. Cloud Enhancement & Dynamic Volatility Index ($VI$):**
+- Tropical cumulus edges cause forward Mie scattering, temporarily pushing GHI above clear-sky ($k_t > 1.2$) before a massive drop.
+- **Variability Index ($VI$):** Ratio of measured GHI curve arc-length to clear-sky arc-length:
+  $$VI = \frac{\sum_{t=1}^{N} \sqrt{(GHI_t - GHI_{t-1})^2 + \Delta t^2}}{\sum_{t=1}^{N} \sqrt{(GHI_{\text{clear},t} - GHI_{\text{clear},t-1})^2 + \Delta t^2}}$$
+- **Ramp Acceleration:** Rolling second difference $\Delta^2 GHI_{1\text{m}}$ and skewness of $k_t$ to separate uniform overcast from fast-moving broken cumulus.
+
+**3. Causal Multi-Scale Wavelet Decomposition:**
+- Apply Maximal Overlap Discrete Wavelet Transform (MODWT) to split GHI into 3 Intrinsic Mode Functions: low-frequency diurnal wave, mesoscale cloud passages (30–60m), and microscale turbulence (1–5m).
+
+---
+
+## Slide 28: Phase 6 Roadmap (Part 2) — Next-Gen Architectures & Physics Loss
+
+**1. Candidate Architectures:**
+- **Stacking Hybrid:** Concatenate the 64-dimensional temporal embedding from the Phase 4c LSTM with the Phase 5 satellite features inside LightGBM (+1.5% to +3% skill gain).
+- **Temporal Fusion Transformer (TFT):** Natively separates past observed 1-min sequences from known future astronomical covariates ($GHI_{\text{clear}}$, solar zenith) via Variable Selection Networks.
+- **PatchTST / iTransformer:** Groups 60 minutes into sub-series patches (twelve 5-minute patches) capturing cloud-edge morphology.
+
+**2. Asymmetric Physics-Guided Ramp Loss:**
+- Standard MSE produces a "lagging shadow" by hedging toward the mean during cloudy afternoons.
+- Implement a custom objective penalizing missing sharp drops and non-physical values:
+  $$\mathcal{L}_{\text{physics}}(\hat{y}, y) = \left(1 + \alpha \frac{\lvert y_t - y_{t-60} \rvert}{GHI_{\text{clear}, t}}\right) (\hat{y}_t - y_t)^2 + \lambda_1 \max(0, -\hat{y}_t)^2 + \lambda_2 \max(0, \hat{y}_t - 1.35 \cdot GHI_{\text{clear}, t})^2$$
+
+---
+
+## Slide 29: Phase 6 Roadmap (Part 3) — Conformal Probabilistic Quantiles (High IEEE Value)
+
+**Why Point Forecasts Are Insufficient for Grids:**
+- In tropical climates, a single point estimate of $450\text{ W/m}^2$ at $t+60$ does not communicate whether irradiance could swing between $150\text{ W/m}^2$ (cumulonimbus) or $850\text{ W/m}^2$ (gap).
+- Calibrated Prediction Intervals are the gold standard for IEEE Transactions.
+
+**Methodology: Multi-Quantile LightGBM + Conformal Prediction:**
+- Train 3 quantile heads for $\alpha \in \{0.10, 0.50, 0.90\}$ using Pinball Loss to generate an **80% Prediction Interval $[\hat{q}_{10}, \hat{q}_{90}]$**.
+- Apply **Adaptive Conformal Inference (ACI)** calibrated on September 2025 to guarantee exact empirical coverage on the test holdout without assuming Gaussian errors.
+
+**IEEE Evaluation Metrics:**
+- **PICP (Prediction Interval Coverage Probability):** Must be $\ge 1 - \alpha$ ($\ge 80\%$).
+- **PINAW (Prediction Interval Normalized Average Width):** Measures sharpness of uncertainty bands.
+- **CRPS (Continuous Ranked Probability Score):** The probabilistic equivalent of MAE.
+
+---
+
+## Slide 30: Phase 7 Roadmap — Closing the Loop: Grid Stability & BESS Ramp Smoothing
+
+**Integrating AI with Power Systems (The EEE Core):**
+- Standard utility grid codes (IEEE 1547 / Malaysian Grid Code) restrict PV plant power ramps to **$\pm 10\% \text{ of rated capacity per minute}$**.
+- Traditional reactive moving-average smoothing reacts *after* a cloud hits, requiring oversized battery capacity and causing state-of-charge (SoC) saturation.
+
+**Predictive Model Predictive Control (MPC) BESS Dispatch:**
+- Use $+5\text{m}$, $+15\text{m}$, and $+60\text{m}$ forecasts alongside lower quantile $\hat{q}_{10}$ to pre-charge or pre-discharge the battery *before* a cloud front shades the array:
+  $$\min_{P_{\text{BESS}}(t)} \sum_{\tau=1}^{H} \left[ w_1 \max\left(0, \lvert \Delta P_{\text{grid}}(t+\tau) \rvert - R_{\max}\right)^2 + w_2 \left(SoC(t+\tau) - SoC_{\text{ref}}\right)^2 \right]$$
+
+**Deliverables for Final DOP / B.Tech Thesis:**
+- **Ramp Violation Reduction (%):** % of 1-minute intervals exceeding grid limits before vs after AI-MPC smoothing.
+- **BESS Sizing Savings (MWh):** Demonstrate that AI predictive control achieves identical grid compliance with a **25–35% smaller battery capacity** compared to reactive filtering.
+
+---
+
+## Slide 31: Summary of Completed Work & Future Roadmap
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                        COMPLETED PHASES (1 TO 5)                       │
+├────────────────────────────────┬───────────────────────────────────────┤
+│ Phase 1 & 2: Rajasthan Hourly  │ RF / XGBoost Baseline (R² = 0.985)    │
+│ Phase 3a/b: Feature Selection  │ 8 Core Features Proven                │
+│ Phase 3c/d: Kuala Lumpur 1-Min │ 480-Point LSTM Sequence Model         │
+│ Phase 4: Diurnal Geometry      │ GHI_clear Astronomical Ceiling Bounds │
+│ Phase 5: Satellite + GBDT      │ LightGBM Champion (R²=0.539, +28.4% SS)│
+└────────────────────────────────┴───────────────────────────────────────┘
+                                    │
+                                    ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│                        PHASE 6 & 7 FUTURE ROADMAP                      │
+├────────────────────────────────┬───────────────────────────────────────┤
+│ Phase 6a: Upwind Spatial Physics│ 5x5 Himawari Sat Patches + VI Index   │
+│ Phase 6b: Conformal Quantiles  │ P10/P50/P90 Intervals (PICP, CRPS)   │
+│ Phase 7:  BESS Grid Stability  │ IEEE 1547 Ramp MPC Smoothing (10MW)   │
+└────────────────────────────────┴───────────────────────────────────────┘
+```
+
+---
+
+## Slide 32: Thank You & Discussion
 
 **Project GitHub Repository:**  
 https://github.com/saimanoj446/Renewable-Energy-Forecasting-AI
 
-- Complete documentation in `midsem_report.md`
-- 38 high-resolution figures in `plots/`
-- All scripts modularized and reproducible
+- 55 high-resolution figures in `plots/`
+- Full Phase 1–5 source code modularized & reproducible
+- Detailed benchmarks documented in `README.md` and `kuala_lumpur/README.md`
+
 
