@@ -1,0 +1,19 @@
+PHASE 4c: DEDICATED t+60 SOLAR FORECASTING RESULTS (KUALA LUMPUR)
+DOP: Forecasting of Renewable Resources Using AI
+BITS Pilani, Hyderabad Campus | EEE Dept | Prof. Arup Ratan
+======================================================================
+
+CORE ARCHITECTURAL UPGRADES:
+  1. Dedicated Single-Horizon Target: +60 minutes lead time only.
+  2. Known Future Astronomy Covariates: GHI_clear(t+60) and Hour(t+60) fed into fusion head.
+  3. Physics-based reconstruction: GHI(t+60) = kt_pred * GHI_clear(t+60).
+  4. Trainable Parameters: 65,953 (Regularized compact recurrent fusion).
+
+METRIC COMPARISON (OUT-OF-TIME TEST SET OCT-DEC 2025):
+  Phase 3 Baseline R² (+60m):   0.5266
+  Phase 4c Model R² (+60m):     0.5239  (Improvement: -0.0027)
+  Phase 3 RMSE (+60m):          204.67 W/m²
+  Phase 4c RMSE (+60m):         203.11 W/m² (Improvement: -1.56 W/m²)
+  Phase 3 MAE (+60m):           155.80 W/m²
+  Phase 4c MAE (+60m):          154.58 W/m²  (Improvement: -1.22 W/m²)
+  Phase 4c Skill Score:         +27.48% over persistence benchmark

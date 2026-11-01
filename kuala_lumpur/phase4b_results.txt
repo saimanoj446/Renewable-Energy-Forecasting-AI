@@ -1,0 +1,15 @@
+PHASE 4b: GHI + GHI_clear LSTM RESULTS
+======================================================================
+
+KEY CHANGE vs Phase 4a: Added GHI_clear as input feature.
+  The LSTM now sees what the clear-sky value SHOULD be at each step.
+  It learns the residual (cloud effect) not the absolute diurnal curve.
+  Params: 57,285 | Device: cuda | Best epoch: 11
+
+H     R²(Ph3)    R²(4a)     R²(4b)     ΔvsP3    RMSE_Ph3   RMSE_4b    Skill%
+────────────────────────────────────────────────────────────────────────────────
++1    0.8978     0.7888     0.7910     -0.1068  91.22      130.48     -38.63%
++5    0.7494     0.6956     0.6950     -0.0544  142.99     157.77     +2.53%
++15   0.6321     0.6041     0.6082     -0.0239  173.90     179.47     +14.51%
++30   0.5712     0.5574     0.5612     -0.0100  189.50     191.69     +19.38%
++60   0.5266     0.5187     0.5244     -0.0022  204.67     205.13     +25.62%

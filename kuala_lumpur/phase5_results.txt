@@ -1,0 +1,18 @@
+PHASE 5: SATELLITE-ENHANCED t+60 SOLAR FORECASTING RESULTS (KUALA LUMPUR)
+DOP: Forecasting of Renewable Resources Using AI
+BITS Pilani, Hyderabad Campus | EEE Dept | Prof. Arup Ratan
+===========================================================================
+
+DATASET & SATELLITE INTEGRATION:
+  - 1-Minute Ground Pyranometer Station (Kuala Lumpur 2025)
+  - Ingested Himawari/ERA5 Satellite Cloud Cover: Cloud_Cover, Cloud_Cover_Low, Mid, High
+  - Multi-Scale Dynamic Rolling Clouds (15m, 30m, 60m ramps and std volatility)
+  - Known Future Astronomy: GHI_clear(t+60), Hour_sin(t+60), Hour_cos(t+60)
+
+MULTI-MODEL BENCHMARK FOR +60 MINUTE HORIZON (OUT-OF-TIME TEST OCT-DEC 2025):
+  Model                          R² Score     RMSE (W/m²)    MAE (W/m²)     Skill Score (%)
+  ---------------------------------------------------------------------------
+  Phase 3: 2-Layer LSTM          0.5266       204.67         155.80         +25.79         %
+  Phase 5: LightGBM (Satellite)  0.5392       197.07         149.30         +28.42         %
+  Phase 5: XGBoost (Satellite)   0.5342       198.14         149.15         +28.03         %
+  Phase 5: GBDT Ensemble         0.5387       197.16         148.95         +28.39         %
