@@ -238,6 +238,22 @@ train_mask = df_model['Month'] <= 8
 cal_mask   = df_model['Month'] == 9   # Conformal calibration set
 test_mask  = df_model['Month'] >= 10  # Out-of-time holdout
 
+# Safe Dynamic Fallback: If partial dataset uploaded (cal or test is 0)
+if cal_mask.sum() == 0 or test_mask.sum() == 0:
+    print("  [NOTICE] Dataset does not span full year (partial file detected).")
+    print("  Automatically falling back to sequential 70% Train / 15% Calibration / 15% Test split...")
+    n_total = len(df_model)
+    n_tr    = int(n_total * 0.70)
+    n_ca    = int(n_total * 0.15)
+    
+    train_mask = np.zeros(n_total, dtype=bool)
+    cal_mask   = np.zeros(n_total, dtype=bool)
+    test_mask  = np.zeros(n_total, dtype=bool)
+    
+    train_mask[:n_tr] = True
+    cal_mask[n_tr:n_tr + n_ca] = True
+    test_mask[n_tr + n_ca:] = True
+
 X_train, y_train = df_model.loc[train_mask, FEATURE_COLS], df_model.loc[train_mask, 'GHI_target_t60']
 X_cal,   y_cal   = df_model.loc[cal_mask,   FEATURE_COLS], df_model.loc[cal_mask,   'GHI_target_t60']
 X_test,  y_test  = df_model.loc[test_mask,  FEATURE_COLS], df_model.loc[test_mask,  'GHI_target_t60']
@@ -507,3 +523,4 @@ print("\n" + "=" * 75)
 print("  [DONE] Phase 6 Completed Successfully!")
 print("  Generated Plots: 56, 57, 58, 59")
 print("=" * 75)
+

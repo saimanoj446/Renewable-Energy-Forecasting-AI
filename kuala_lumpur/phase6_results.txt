@@ -1,0 +1,23 @@
+PHASE 6: PROBABILISTIC CONFORMAL SOLAR FORECASTING RESULTS (KUALA LUMPUR)
+DOP: Forecasting of Renewable Resources Using AI
+BITS Pilani, Hyderabad Campus | EEE Dept | Prof. Arup Ratan
+================================================================================
+
+1. ADVANCED FEATURE PHYSICS INTEGRATED:
+   - Variability Index (VI_15, VI_30): Arc-length ratio measuring cloud edge turbulence
+   - Ramp Acceleration (d2_GHI, d2_kt): Dynamic 2nd differences
+   - Satellite Cloud Layers: Low Convective, Mid, High, Total
+   - Known Future Astronomy: GHI_clear(t+60), Hour_sin, Hour_cos
+
+2. DETERMINISTIC POINT FORECAST (+60 MIN HORIZON):
+   Phase 3 LSTM R²:               0.5266  | RMSE: 204.67 W/m²
+   Phase 5 LightGBM R²:           0.5392  | RMSE: 197.07 W/m²
+   Phase 6 Physics-P50 R²:        0.5480  | RMSE: 195.18 W/m² (Skill: +29.10%)
+   Phase 6 MAE:                   141.90 W/m²
+
+3. PROBABILISTIC CONFORMAL EVALUATION (80% NOMINAL INTERVAL):
+   Raw LightGBM Coverage (PICP):  76.67% | PINAW Width: 32.23%
+   Conformalized Coverage (PICP): 81.98% (Guaranteed >= 80% Empirical Coverage)
+   Conformal PINAW Width:         33.74%
+   Quantile Pinball Losses:       q10: 26.47 W/m² | q50: 70.95 W/m² | q90: 30.34 W/m²
+   Continuous Ranked Score (CRPS):42.58 W/m²

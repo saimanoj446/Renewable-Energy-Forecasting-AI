@@ -30,7 +30,8 @@ d:/DOP/kuala_lumpur/
 ├── phase4b_results.txt                 # Phase 4b GHI+GHI_clear LSTM results
 ├── phase4c_results.txt                 # Phase 4c Dedicated t+60 results
 ├── phase5_results.txt                  # Phase 5 Satellite-Enhanced LightGBM & XGBoost results
-├── plots/                              # Generated figures (plots 29–55)
+├── phase6_results.txt                  # Phase 6 Conformal Quantile & Physics-P50 results
+├── plots/                              # Generated figures (plots 29–59)
 └── README.md                           # This documentation file
 ```
 
@@ -81,9 +82,11 @@ Evaluated strictly on the out-of-time test set (Oct–Dec 2025):
 | :--- | :--- | :--- | :---: | :---: | :---: | :---: |
 | **Phase 3** | 2-Layer PyTorch LSTM | 8 features $\times$ 60 min (480 pts) | 0.5266 | 204.67 | 155.80 | +25.79% |
 | **Phase 4c** | Dedicated Recurrent Fusion | Past Seq + Known Future $GHI_{\text{clear}}(t+60)$ | 0.5239 | 203.11 | 154.58 | +27.48% |
-| **Phase 5** | **LightGBM Regressor** | **Ground + Satellite Clouds + Astronomy** | **0.5392** 🏆 | **197.07** 🏆 | **149.30** | **+28.42%** 🏆 |
-| **Phase 5** | **XGBoost Regressor** | **Ground + Satellite Clouds + Astronomy** | **0.5342** | **198.14** | **149.15** 🏆 | **+28.03%** |
-| **Phase 5** | **GBDT Ensemble** | **50% LightGBM + 50% XGBoost** | **0.5387** | **197.16** | **148.95** 🏆 | **+28.39%** |
+| **Phase 5** | **LightGBM Regressor** | **Ground + Satellite Clouds + Astronomy** | **0.5392** | **197.07** | **149.30** | **+28.42%** |
+| **Phase 5** | **XGBoost Regressor** | **Ground + Satellite Clouds + Astronomy** | **0.5342** | **198.14** | **149.15** | **+28.03%** |
+| **Phase 5** | **GBDT Ensemble** | **50% LightGBM + 50% XGBoost** | **0.5387** | **197.16** | **148.95** | **+28.39%** |
+| **Phase 6** | **Physics-P50 CQR Hybrid** | **Variability Index (VI) + Sat Clouds + Conformal** | **0.5480** 🏆 | **195.18** 🏆 | **141.90** 🏆 | **+29.10%** 🏆 |
+| *Phase 6 (Probabilistic)* | *Conformal 80% Band [q10, q90]* | *PICP Coverage = **81.98%** (Nominal 80%)* | *PINAW: 33.74%* | *CRPS: 42.58 W/m²* | *Pinball: q10=26.5, q90=30.3* | *Calibrated ✅* |
 
 ---
 

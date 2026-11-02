@@ -225,6 +225,22 @@ train_mask = df_model['Month'] <= 8
 val_mask   = df_model['Month'] == 9
 test_mask  = df_model['Month'] >= 10
 
+# Safe Dynamic Fallback: If partial dataset uploaded (val or test is 0)
+if val_mask.sum() == 0 or test_mask.sum() == 0:
+    print("  [NOTICE] Dataset does not span full year (partial file detected).")
+    print("  Automatically falling back to sequential 70% Train / 15% Val / 15% Test split...")
+    n_total = len(df_model)
+    n_tr    = int(n_total * 0.70)
+    n_va    = int(n_total * 0.15)
+    
+    train_mask = np.zeros(n_total, dtype=bool)
+    val_mask   = np.zeros(n_total, dtype=bool)
+    test_mask  = np.zeros(n_total, dtype=bool)
+    
+    train_mask[:n_tr] = True
+    val_mask[n_tr:n_tr + n_va] = True
+    test_mask[n_tr + n_va:] = True
+
 X_train = df_model.loc[train_mask, FEATURE_COLS]
 y_train = df_model.loc[train_mask, 'GHI_target_t60']
 

@@ -58,9 +58,11 @@ Input Tensor: `(batch_size, 60, 8)` = **480 data points per sample** (evaluated 
 | :--- | :--- | :--- | :---: | :---: | :---: | :---: |
 | **Phase 3** | 2-Layer PyTorch LSTM | 8 features $\times$ 60 min (480 pts) | 0.5266 | 204.67 | 155.80 | +25.79% |
 | **Phase 4c** | Recurrent Fusion | Past Seq + Known Future Astronomy $GHI_{\text{clear}}(t+60)$ | 0.5239 | 203.11 | 154.58 | +27.48% |
-| **Phase 5** | **LightGBM Regressor** | **Ground Pyranometer + Satellite Clouds + Astronomy** | **0.5392** 🏆 | **197.07** 🏆 | **149.30** | **+28.42%** 🏆 |
-| **Phase 5** | **XGBoost Regressor** | **Ground Pyranometer + Satellite Clouds + Astronomy** | **0.5342** | **198.14** | **149.15** 🏆 | **+28.03%** |
-| **Phase 5** | **GBDT Ensemble** | **50% LightGBM + 50% XGBoost** | **0.5387** | **197.16** | **148.95** 🏆 | **+28.39%** |
+| **Phase 5** | **LightGBM Regressor** | **Ground Pyranometer + Satellite Clouds + Astronomy** | **0.5392** | **197.07** | **149.30** | **+28.42%** |
+| **Phase 5** | **XGBoost Regressor** | **Ground Pyranometer + Satellite Clouds + Astronomy** | **0.5342** | **198.14** | **149.15** | **+28.03%** |
+| **Phase 5** | **GBDT Ensemble** | **50% LightGBM + 50% XGBoost** | **0.5387** | **197.16** | **148.95** | **+28.39%** |
+| **Phase 6** | **Physics-P50 Conformal Hybrid** | **Variability Index (VI) + Satellite + Conformal CQR** | **0.5480** 🏆 | **195.18** 🏆 | **141.90** 🏆 | **+29.10%** 🏆 |
+| *Phase 6 (Probabilistic)* | *Conformal 80% Prediction Interval* | *Calibrated Coverage (PICP) = **81.98%** (Nominal 80%)* | *PINAW: 33.7%* | *CRPS: 42.58 W/m²* | *Pinball Loss: 42.5 W/m²* | *IEEE Standard ✅* |
 
 ---
 
