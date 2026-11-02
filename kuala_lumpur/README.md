@@ -23,6 +23,7 @@ d:/DOP/kuala_lumpur/
 ├── 10_phase4b_ghi_clearsky_lstm.py     # Phase 4b: GHI + GHI_clear residual LSTM
 ├── 11_phase4c_t60_specialist.py        # Phase 4c: Dedicated t+60 Specialist + Future Astronomy
 ├── 12_phase5_satellite_lightgbm.py     # Phase 5: Satellite Cloud Layers + LightGBM/XGBoost Regressors
+├── 13_phase6_probabilistic_conformal.py # Phase 6: Multi-Quantile LightGBM + Conformalized CQR Prediction Intervals
 ├── phase3c_kl_feature_results.txt      # Numerical comparison: full (25) vs reduced (8) features
 ├── lstm_results.txt                    # Phase 3d LSTM multi-horizon & MPP metrics
 ├── phase4_results.txt                  # Phase 4a k_t LSTM results
@@ -105,4 +106,7 @@ python d:\DOP\kuala_lumpur\11_phase4c_t60_specialist.py
 
 # 5. Phase 5: Satellite-Enhanced LightGBM & XGBoost Models:
 python d:\DOP\kuala_lumpur\12_phase5_satellite_lightgbm.py
+
+# 6. Phase 6: Probabilistic Conformal Quantiles (P10/P50/P90) + Physics Volatility:
+python d:\DOP\kuala_lumpur\13_phase6_probabilistic_conformal.py
 ```
