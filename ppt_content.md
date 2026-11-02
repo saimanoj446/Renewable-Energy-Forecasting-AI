@@ -567,20 +567,33 @@ $$GHI(t+60) = k_t(t+60) \times GHI_{\text{clear}}(t+60)$$
 
 ---
 
-## Slide 29: Phase 6 Roadmap (Part 3) — Conformal Probabilistic Quantiles (High IEEE Value)
+## Slide 29: Phase 6 — Conformal Probabilistic Quantiles & Physics-P50 Results
 
 **Why Point Forecasts Are Insufficient for Grids:**
 - In tropical climates, a single point estimate of $450\text{ W/m}^2$ at $t+60$ does not communicate whether irradiance could swing between $150\text{ W/m}^2$ (cumulonimbus) or $850\text{ W/m}^2$ (gap).
-- Calibrated Prediction Intervals are the gold standard for IEEE Transactions.
+- Calibrated Prediction Intervals provide operational certainty for grid spinning reserves.
 
-**Methodology: Multi-Quantile LightGBM + Conformal Prediction:**
-- Train 3 quantile heads for $\alpha \in \{0.10, 0.50, 0.90\}$ using Pinball Loss to generate an **80% Prediction Interval $[\hat{q}_{10}, \hat{q}_{90}]$**.
-- Apply **Adaptive Conformal Inference (ACI)** calibrated on September 2025 to guarantee exact empirical coverage on the test holdout without assuming Gaussian errors.
+**Phase 6 Architecture & Methodology:**
+- **Physics Volatility Features:** Ingested Variability Index ($VI_{30}$ arc-length ratio), Ramp Acceleration ($\Delta^2 GHI$, $\Delta^2 k_t$), and rolling ramp standard deviation ($\sigma(\Delta GHI_{15\text{m}})$).
+- **Multi-Quantile LightGBM:** Trained 3 quantile heads for $\alpha \in \{0.10, 0.50, 0.90\}$ using Pinball Loss.
+- **Split Conformal Prediction (CQR):** Calibrated on September 2025 to eliminate monsoon under-coverage and guarantee exact empirical coverage.
 
-**IEEE Evaluation Metrics:**
-- **PICP (Prediction Interval Coverage Probability):** Must be $\ge 1 - \alpha$ ($\ge 80\%$).
-- **PINAW (Prediction Interval Normalized Average Width):** Measures sharpness of uncertainty bands.
-- **CRPS (Continuous Ranked Probability Score):** The probabilistic equivalent of MAE.
+**The Experimental Results (+60 Min Horizon):**
+| Metric | Phase 3 (LSTM) | Phase 5 (LightGBM) | Phase 6 (Physics-P50 / CQR) | Benefit / IEEE Value |
+|---|:---:|:---:|:---:|---|
+| **R² Score** | 0.5266 | 0.5392 | **0.5480 🏆** | Highest point accuracy in project |
+| **RMSE (W/m²)** | 204.67 | 197.07 | **195.18 🏆** | Dropped by 9.5 W/m² vs LSTM |
+| **MAE (W/m²)** | 155.80 | 149.30 | **141.90 🏆** | Dropped by 13.9 W/m² vs LSTM |
+| **IEEE Skill Score** | +25.79% | +28.42% | **+29.10% 🏆** | Highest skill over persistence |
+| **Conformal Coverage (PICP)** | — | 76.67% (Raw) | **81.98% 🏆** | Exceeds 80% nominal threshold |
+| **Interval Width (PINAW)** | — | — | **33.74%** | Sharp, well-bounded intervals |
+| **CRPS Score** | — | — | **42.58 W/m²** | Gold standard probabilistic score |
+
+**Key Plots:**
+- `plots/56_ph6_probabilistic_fan_chart.png` — 3-Day Walk-Forward Fan Chart (dynamic band expansion during convective clouds)
+- `plots/57_ph6_conformal_reliability_diagram.png` — Calibration curve tracking 1:1 diagonal & Pinball Loss
+- `plots/58_ph6_physics_feature_importance.png` — Feature rankings ($VI_{30}$ and `Cloud_Cover_Low` dominate)
+- `plots/59_ph6_benchmark_comparison.png` — Accuracy evolution across all phases
 
 ---
 
@@ -604,22 +617,22 @@ $$GHI(t+60) = k_t(t+60) \times GHI_{\text{clear}}(t+60)$$
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
-│                        COMPLETED PHASES (1 TO 5)                       │
+│                        COMPLETED PHASES (1 TO 6)                       │
 ├────────────────────────────────┬───────────────────────────────────────┤
 │ Phase 1 & 2: Rajasthan Hourly  │ RF / XGBoost Baseline (R² = 0.985)    │
 │ Phase 3a/b: Feature Selection  │ 8 Core Features Proven                │
 │ Phase 3c/d: Kuala Lumpur 1-Min │ 480-Point LSTM Sequence Model         │
 │ Phase 4: Diurnal Geometry      │ GHI_clear Astronomical Ceiling Bounds │
 │ Phase 5: Satellite + GBDT      │ LightGBM Champion (R²=0.539, +28.4% SS)│
+│ Phase 6: Conformal Hybrid      │ Physics-P50 (R²=0.548, 82% PICP, CRPS)│
 └────────────────────────────────┴───────────────────────────────────────┘
                                     │
                                     ▼
 ┌────────────────────────────────────────────────────────────────────────┐
-│                        PHASE 6 & 7 FUTURE ROADMAP                      │
+│                        PHASE 7 FUTURE ROADMAP                          │
 ├────────────────────────────────┬───────────────────────────────────────┤
-│ Phase 6a: Upwind Spatial Physics│ 5x5 Himawari Sat Patches + VI Index   │
-│ Phase 6b: Conformal Quantiles  │ P10/P50/P90 Intervals (PICP, CRPS)   │
-│ Phase 7:  BESS Grid Stability  │ IEEE 1547 Ramp MPC Smoothing (10MW)   │
+│ Phase 7a: Spatial Advection    │ 5x5 Himawari Sat Patches + Wind Vec   │
+│ Phase 7b: BESS Grid Stability  │ IEEE 1547 Ramp MPC Smoothing (10MW)   │
 └────────────────────────────────┴───────────────────────────────────────┘
 ```
 
