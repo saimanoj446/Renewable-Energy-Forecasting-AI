@@ -267,50 +267,120 @@ Evaluated on the exact same out-of-time holdout (Oct–Dec 2025, 66,240 minute r
 
 ---
 
-## Slide 13: Future Work (Track 1) — Upwind Spatial Cloud Advection & Wavelet Decomposition
+## Slide 13: Phase 7 — 3D Cloud Parallax & Ray-Tracing Shadow Physics
 
-### 1. $5 \times 5$ Satellite Grid Patch Ingestion
-* Rather than querying a single coordinate, query a **$5 \times 5$ spatial grid of Himawari-8/9 geostationary channels** (Band 03 visible albedo + Band 13 IR cloud-top temperature at 10-minute, 2 km resolution) over Peninsular Malaysia.
-* Project the cloud location using the 850 hPa wind vector $\vec{v}_{\text{wind}}$:
-  $$\vec{x}_{\text{upwind}} = \vec{x}_{\text{station}} - \vec{v}_{850\text{hPa}} \cdot \Delta t$$
-* **Turns an unobservable temporal jump into an observable spatial lookup!**
+### 1. The Physics of Cloud Offset & Satellite Obliquity
+* Satellites view Peninsular Malaysia obliquely ($\theta_v = 42.8^\circ, \phi_v = 102.2^\circ$), projecting clouds away from their true ground coordinates:
+  $$\vec{d}_{\text{parallax}} = H_c \cdot \tan\theta_v \cdot [\sin\phi_v \hat{i} + \cos\phi_v \hat{j}]$$
+* Sunlight casts cloud shadows on the ground along the solar zenith angle ($\theta_s, \phi_s$):
+  $$\vec{d}_{\text{shadow}} = H_c \cdot \tan\theta_s \cdot [-\sin\phi_s \hat{i} - \cos\phi_s \hat{j}]$$
+* **Net Ground Offset Vector:**
+  $$\vec{D}_{\text{net}} = \vec{d}_{\text{shadow}} - \vec{d}_{\text{parallax}}$$
+* **Slant Optical Path Transmittance:**
+  $$m_{\text{optical}} = \frac{1}{\cos\theta_s + 0.05}, \quad T_{\text{slant}} = \exp\left(-0.025 \cdot CC_{\text{low}} \cdot m_{\text{optical}}\right)$$
 
-### 2. Causal Wavelet Decomposition (MODWT)
-* Apply the **Maximal Overlap Discrete Wavelet Transform (MODWT)** to decompose 1-minute GHI into 3 causal Intrinsic Mode Functions:
-  - Low-Frequency IMF: Smooth astronomical diurnal curve ($>120\text{ min}$).
-  - Mesoscale IMF: Cloud passage transients ($15-60\text{ min}$).
-  - High-Frequency IMF: Microscale sensor jitter & atmospheric turbulence ($1-5\text{ min}$).
-
----
-
-## Slide 14: Future Work (Track 2) — Closing the Loop: Grid Stability & BESS Ramp Smoothing
-
-### Connecting AI to Electrical Power Systems (The EEE Core)
-* **The Grid Code Restriction:** Utility standards (IEEE 1547 / Malaysian Grid Code) penalize solar plants if power injection fluctuates by more than **$\pm 10\% \text{ of rated capacity per minute}$** ($1\text{ MW/min}$ on a 10 MW farm).
-* **The Reactive Problem:** Standard low-pass filter smoothing reacts *after* a cloud drop occurs, draining the battery and causing state-of-charge (SoC) saturation.
-
-### Proposed Solution: Model Predictive Control (MPC) BESS Dispatch
-We formulate a finite-horizon optimization problem using our Phase 6 median forecast and lower quantile $\hat{q}_{10}$:
-$$\min_{P_{\text{BESS}}(t)} \sum_{\tau=1}^{H} \left[ w_1 \max\left(0, \lvert \Delta P_{\text{grid}}(t+\tau) \rvert - R_{\max}\right)^2 + w_2 \left(SoC(t+\tau) - SoC_{\text{target}}\right)^2 \right]$$
-
-### Measurable Engineering Deliverables for Final DOP:
-1. **Ramp Violation Reduction (%):** Reduction in the percentage of 1-minute intervals violating grid compliance before vs. after AI predictive smoothing.
-2. **Battery Sizing Savings (MWh):** Quantify how predictive smoothing using our Phase 6 model allows a solar farm to achieve identical grid compliance with a **25–35% smaller BESS capacity**.
+### 2. Experimental Verification Results (Plots 63, 64, 65)
+* `dx_net_offset` emerged as the **#3 most influential feature** across all 25 inputs.
+* At $t+60\text{ min}$, Parallax alone boosted raw 1-minute $R^2$ from $0.5343 \to 0.5423$ (+0.0080 gain).
+* Proved that at high solar zenith angles (morning/afternoon), cloud shadows shift up to $6\text{ km}$ from the satellite's apparent coordinate!
 
 ---
 
-## Slide 15: Conclusion & Meeting Discussion Points
+## Slide 14: Phase 7b — 2D Parametric Horizon & Lookback Optimization
 
-### Summary of What Was Delivered This Week:
-1. **Physically Bounded Forecasts:** Eliminated the solar noon linear overshoot using deterministic clear-sky ceilings ($GHI_{\text{clear}}(t+60)$).
-2. **Satellite Cloud Integration:** Ingested geostationary cloud optical layers via API, proving `Cloud_Cover_Low` is the #3 most influential feature.
-3. **New State-of-the-Art Accuracy:** Replaced LSTMs with LightGBM and engineered arc-length Variability Index ($VI_{30}$), achieving our project's peak metrics: **$R^2 = 0.5480$**, **$\text{MAE} = 141.90\ W/m^2$**, and **$+29.10\%$ Skill Score**.
-4. **IEEE Conformal Quantiles:** Delivered calibrated 80% prediction bands with verified **$81.98\%$ empirical coverage** and **$42.58\ W/m^2$ CRPS**.
+### 1. 36-Cell Parametric Grid Sweep ($6 \times 6$)
+* Evaluated Lookback Windows $x \in [15, 30, 45, 60, 90, 120]\text{ minutes}$.
+* Evaluated Forecast Horizons $t_d \in [5, 10, 15, 30, 45, 60]\text{ minutes}$.
+* Cross-benchmarked Baseline vs Parallax-Enhanced models on 66,240 test points.
 
-### Discussion Prompts for Prof. Arup Ratan:
-1. *Would sir prefer us to prioritize Track 1 (Upwind Spatial Satellite Patches) to push deterministic $R^2$ higher, or Track 2 (BESS Ramp-Rate Smoothing & Grid Stability) to strengthen the power-systems contribution for the EEE department?*
-2. *Should the BESS simulation be scaled to a specific utility capacity (e.g., 5 MW / 10 MW standard solar park)?*
+### 2. Key Research Findings (Plots 60, 61, 62, 66, 67)
+1. **$x = 60\text{ Minutes}$ is the Universal Sweet Spot:**
+   - Shorter lookbacks ($15-30\text{m}$) lack cloud velocity context; longer lookbacks ($90-120\text{m}$) suffer from non-stationary cloud decay.
+2. **Where Parallax Delivers Largest Accuracy Gains (Plot 66):**
+   - At short horizons ($t_d \le 15\text{m}$), pyranometer persistence dominates.
+   - At operational horizons ($t_d \ge 30\text{m}$), Parallax produces **unanimously positive $\Delta R^2$** across all lookback windows (up to $+0.0096$ at $60\text{m}$).
 
 ---
-*All 59 publication figures, clean modular scripts, and results files are committed and accessible at:*  
+
+## Slide 15: Phase 7c — Breaking the "Double Penalty" Ceiling
+
+### 1. Why Point MSE Hit a Wall ($R^2 \approx 0.54$)
+* Pinhole pyranometer sensors ($2\text{ cm}^2$) measure sub-second turbulence, while satellites average over $2-10\text{ km}$ grids.
+* **The Double Penalty Effect:** Predicting a cloud drop 2 minutes early is penalized *twice* by MSE (once for predicting a drop early, and again for missing the drop 2 minutes later). Blurry naive averages get better point MSE than sharp physical models!
+
+### 2. The Breakthrough: Target Aggregation & Online EWMA Causal Filtering
+* Aligned targets with real utility market operating blocks:
+  - **1-Min Instantaneous:** $R^2 = 0.6684$ ($+32.41\%$ skill, RMSE $= 167.1\text{ W/m}^2$)
+  - **5-Min CAISO RTD Block:** **$R^2 = 0.7164$ 🏆** ($+36.62\%$ skill, RMSE $= 149.3\text{ W/m}^2$, Ramp MAE $= 18.8\text{ W/m}^2$)
+  - **15-Min Market Dispatch Block:** **$R^2 = 0.7633$ 🏆** ($+41.14\%$ skill, RMSE $= 131.3\text{ W/m}^2$, Ramp MAE $= 11.0\text{ W/m}^2$)
+* **Online EWMA Causal Filter:** Tracks running bias $b_t = 0.85 b_{t-1} + 0.15 (y_t - \hat{y}_t)$ with zero future leakage, eliminating diurnal monsoon drift.
+
+---
+
+## Slide 16: Phase 8 — Dynamic PV Array Power Modeling & Sandia Thermal Lag
+
+### 1. Physics-Informed Utility Solar Farm Model (10 MWp DC / 8.0 MW AC)
+* **Sandia Dynamic Cell Temperature Model:**
+  $$T_{\text{cell, ss}} = T_{\text{amb}} + GHI \cdot \exp(a + b \cdot WS) + \frac{GHI}{1000} \cdot \Delta T$$
+  *(Open-rack coefficients: $a = -3.56, b = -0.075\text{ s/m}, \Delta T = 3.0^\circ\text{C}$)*
+* **1st-Order Thermal Inertia Filter ($\tau_{\text{thermal}} = 7.0\text{ min}$):**
+  $$T_{\text{cell}}(t) = (1 - \alpha_T) T_{\text{cell}}(t-1) + \alpha_T T_{\text{cell, ss}}(t), \quad \alpha_T = 1 - e^{-\Delta t / \tau_{\text{thermal}}}$$
+* **Silicon Temperature Derating & Central Inverter Clipping:**
+  $$P_{\text{dc}} = 10\text{ MW} \cdot \frac{GHI}{1000} \cdot \left[1 - 0.0042(T_{\text{cell}} - 25^\circ\text{C})\right], \quad P_{\text{ac}} = \min(8.0\text{ MW}, 0.965 \cdot P_{\text{dc}})$$
+
+### 2. Experimental Verification Results (Plot 71)
+* **Midday Cell Heating:** In tropical Kuala Lumpur ($T_{\text{amb}} \approx 33^\circ\text{C}$), cell temperature reaches **$61.2^\circ\text{C}$** at solar noon.
+* **Thermal Power Loss:** Shaves **$1.45\text{ MW}$ ($-14.5\%$ capacity)** off the $10\text{ MW}$ array at peak irradiance!
+* **AC Power Forecast Accuracy (+60 min):**
+  - 5-Min CAISO RTD Target: **$R^2 = 0.7248$ 🏆** ($\text{RMSE} = 0.88\text{ MW}$)
+  - 15-Min Market Dispatch Target: **$R^2 = 0.7680$ 🏆** ($\text{RMSE} = 0.78\text{ MW}$)
+
+---
+
+## Slide 17: Phase 8 — Predictive BESS Grid Balancing & IEEE 1547 Compliance
+
+### 1. Grid Code Compliance & Controller Benchmark (Plot 72)
+* **IEEE 1547 Standard:** Grid ramp rates strictly restricted to $\pm 10\% P_{\text{rated}}/\text{min} = \pm 0.80\text{ MW/min}$.
+* **Controller Benchmark on Tropical Convective Storm:**
+  - **Uncontrolled PV Direct Injection:** **$14.8\%$ Ramp Violations** (grid trip risk).
+  - **Standard Reactive BESS (2.5 MWh):** **$3.2\%$ Violations** — Drains to the $10\%$ SoC floor halfway through the cloud and suffers a catastrophic power collapse.
+  - **Phase 7c Predictive AI BESS:** **$< 0.2\%$ Violations (> 99.8% Compliance 🏆)** — Pre-charges battery to $65\%$ ahead of the shadow and pre-steers grid injection smoothly.
+
+### 2. BESS Sizing Pareto Frontier (Plot 73)
+* Swept battery capacity from $0.5\text{ MWh}$ to $4.0\text{ MWh}$ to meet the $99.5\%$ utility grid code standard:
+  - Reactive BESS Required: **$2.60\text{ MWh}$**
+  - Predictive AI BESS Required: **$1.75\text{ MWh}$**
+  - **Capacity Sizing Reduction: $32.7\%$ MWh Savings 🏆** (Saves **~$425,000** in utility storage CAPEX!).
+
+---
+
+## Slide 18: Master Multi-Phase Progression Scorecard (Phases 1–8)
+
+Full evolutionary progression across all project milestones:
+
+| Phase | Milestone / Innovation | Target Resolution | Lead Time | $R^2$ Score | RMSE | Key Research Finding |
+| :--- | :--- | :--- | :---: | :---: | :---: | :--- |
+| **Phase 1** | Random Forest Baseline | Hourly (Rajasthan) | +1 hr | 0.9846 | 39.4 W/m² | Cyclical feature engineering |
+| **Phase 2** | Multi-Model Benchmark | Hourly (Rajasthan) | +1 hr | 0.9842 | 39.9 W/m² | XGBoost / SVR equivalence |
+| **Phase 3d** | 2-Layer PyTorch LSTM | 1-Min (Kuala Lumpur) | +60 min | 0.5266 | 204.7 W/m² | 480-point tensor rule validated |
+| **Phase 4c** | Recurrent Astronomy Fusion | 1-Min (Kuala Lumpur) | +60 min | 0.5239 | 203.1 W/m² | 0% runaway solar noon overshoot |
+| **Phase 5** | Satellite Cloud GBDT | 1-Min (Kuala Lumpur) | +60 min | 0.5392 | 197.1 W/m² | Himawari low clouds #3 feature |
+| **Phase 6** | Conformalized Quantile CQR | 1-Min (Kuala Lumpur) | +60 min | 0.5480 | 195.2 W/m² | 81.98% coverage, CRPS=42.6 |
+| **Phase 7** | 3D Ray-Tracing Parallax | 1-Min (Kuala Lumpur) | +60 min | 0.5423 | 196.4 W/m² | Geometry shifts shadows up to 6 km |
+| **Phase 7b** | 2D Lookback/Horizon Map | 1-Min (Kuala Lumpur) | 5–60 min | 0.7903–0.5423 | — | 60-min lookback universal sweet spot |
+| **Phase 7c** | **Anti-Double Penalty + EWMA** | **5-Min CAISO RTD** | **+60 min** | **0.7164 🏆** | **149.3 W/m²** | **R² leaps past 0.70 high-precision bar** |
+| **Phase 7c** | **Anti-Double Penalty + EWMA** | **15-Min Market Dispatch** | **+60 min** | **0.7633 🏆** | **131.3 W/m²** | **+41.14% IEEE Skill Score** |
+| **Phase 8** | **Dynamic PV Power + BESS** | **8 MW AC Farm** | **+60 min** | **0.7248 (Pac)** | **0.88 MW** | **32.7% BESS sizing reduction (Pareto)** |
+
+---
+
+## Slide 19: Conclusion & Final Defense Summary
+
+### Summary of Completed Deliverables:
+1. **Resolved 1-Minute Turbulence Ceiling:** Proved that point MSE plateaued at $R^2 \approx 0.54$ due to the "Double Penalty Effect"; aggregating to 5-min RTD and 15-min dispatch unlocked **$R^2 = 0.7164$** and **$R^2 = 0.7633$**.
+2. **First-Principles Atmospheric Physics:** Integrated Ineichen-Perez clear-sky ceilings, 3D satellite ray-tracing parallax, and causal online EWMA residual tracking.
+3. **Closed Power Systems Engineering Loop:** Built a complete dynamic PV array power converter ($10\text{ MWp DC} / 8\text{ MW AC}$) with Sandia thermal lag ($\tau = 7\text{ min}$) and demonstrated an IEEE 1547 compliant BESS dispatch that reduces required battery storage capacity by **$32.7\%$**.
+
+---
+*All 73 publication figures, clean modular scripts, and results files are committed and accessible at:*  
 **https://github.com/saimanoj446/Renewable-Energy-Forecasting-AI**

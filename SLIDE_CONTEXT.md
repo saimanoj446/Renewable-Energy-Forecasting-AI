@@ -32,6 +32,15 @@ Use these exact raw image links to embed the figures into each corresponding sli
 | **Plot 57** | Conformal Calibration Curve | `https://raw.githubusercontent.com/saimanoj446/Renewable-Energy-Forecasting-AI/main/plots/57_ph6_conformal_reliability_diagram.png` |
 | **Plot 58** | Physics & Volatility Importance | `https://raw.githubusercontent.com/saimanoj446/Renewable-Energy-Forecasting-AI/main/plots/58_ph6_physics_feature_importance.png` |
 | **Plot 59** | Project Benchmark Progression | `https://raw.githubusercontent.com/saimanoj446/Renewable-Energy-Forecasting-AI/main/plots/59_ph6_benchmark_comparison.png` |
+| **Plot 60** | Lookback vs Horizon Heatmap | `https://raw.githubusercontent.com/saimanoj446/Renewable-Energy-Forecasting-AI/main/plots/60_lookback_horizon_heatmap.png` |
+| **Plot 63** | 3D Ray-Tracing Cloud Parallax | `https://raw.githubusercontent.com/saimanoj446/Renewable-Energy-Forecasting-AI/main/plots/63_ph7_parallax_geometry.png` |
+| **Plot 66** | Parallax Horizon Delta Heatmap | `https://raw.githubusercontent.com/saimanoj446/Renewable-Energy-Forecasting-AI/main/plots/66_ph7_parallax_horizon_heatmap.png` |
+| **Plot 68** | Target Aggregation Leap (Double Penalty) | `https://raw.githubusercontent.com/saimanoj446/Renewable-Energy-Forecasting-AI/main/plots/68_ph7c_target_aggregation_breakthrough.png` |
+| **Plot 69** | Walk-Forward Target Aggregation | `https://raw.githubusercontent.com/saimanoj446/Renewable-Energy-Forecasting-AI/main/plots/69_ph7c_walkforward_aggregation_comparison.png` |
+| **Plot 70** | Online EWMA Causal Filter Impact | `https://raw.githubusercontent.com/saimanoj446/Renewable-Energy-Forecasting-AI/main/plots/70_ph7c_ewma_bias_correction_impact.png` |
+| **Plot 71** | Thermal Derating & AC Power Forecast | `https://raw.githubusercontent.com/saimanoj446/Renewable-Energy-Forecasting-AI/main/plots/71_ph8_thermal_derating_power_curve.png` |
+| **Plot 72** | BESS Convective Storm Ramp Smoothing | `https://raw.githubusercontent.com/saimanoj446/Renewable-Energy-Forecasting-AI/main/plots/72_ph8_bess_ramp_smoothing_dispatch.png` |
+| **Plot 73** | BESS Sizing Pareto Frontier | `https://raw.githubusercontent.com/saimanoj446/Renewable-Energy-Forecasting-AI/main/plots/73_ph8_bess_sizing_pareto_curve.png` |
 
 ---
 
@@ -214,49 +223,106 @@ Use these exact raw image links to embed the figures into each corresponding sli
 
 ---
 
-### SLIDE 13: FUTURE WORK (TRACK 1) — UPWIND SPATIAL ADVECTION & WAVELETS
-- Layout: 2-Column Split (Left: Spatial Formulation, Right: Wavelet Decomposition)
-- Header: Phase 7 Roadmap: Upwind Spatial Satellite Patches
-- Subheader: Turning Temporal Extrapolation into an Observable Spatial Lookup
+### SLIDE 13: PHASE 7 — 3D CLOUD PARALLAX & RAY-TRACING SHADOW PHYSICS
+- Layout: 2-Column Split (Left: Geometry & Equations, Right: Plot 63)
+- Header: Phase 7: 3D Cloud Parallax & Ray-Tracing Geometry
+- Subheader: Correcting Satellite Obliquity & Solar Slant-Path Ground Displacement
 - Content:
-  * 1. 5×5 Geostationary Grid Patches:
-    - Ingest Himawari-8/9 Band 03 (Visible albedo) + Band 13 (IR cloud-top temperature) at 10-min, 2 km resolution.
-    - Project upwind location using 850 hPa wind vector v_wind: x_upwind = x_station - v_850hPa · Δt.
-    - Ingests incoming cloud fronts 15–40 km upwind before they shade the pyranometer!
-  * 2. Causal Wavelet Decomposition (MODWT):
-    - Split 1-min GHI into 3 Intrinsic Mode Functions:
-      * Low-frequency: Astronomical diurnal curve (>120 min).
-      * Mesoscale: Cloud front passages (15–60 min).
-      * Microscale: Atmospheric turbulence & sensor noise (1–5 min).
+  * The Problem: Satellites view Peninsular Malaysia obliquely (θv = 42.8°), projecting clouds up to 6 km away from their ground shadows.
+  * Ray-Tracing Physics:
+    - Shadow Displacement: d_shadow = H_c · tan(θs)
+    - Parallax Offset: d_parallax = H_c · tan(θv)
+    - Net Ground Displacement: D_net = d_shadow - d_parallax
+  * Experimental Verification:
+    - `dx_net_offset` ranked as the #3 most influential predictive feature.
+    - Boosted raw 1-minute R² from 0.5343 to 0.5423 (+0.0080 gain).
+- Image Asset: `https://raw.githubusercontent.com/saimanoj446/Renewable-Energy-Forecasting-AI/main/plots/63_ph7_parallax_geometry.png`
 
 ---
 
-### SLIDE 14: FUTURE WORK (TRACK 2) — BESS RAMP-RATE SMOOTHING (IEEE 1547)
-- Layout: 2-Column Split (Left: Power Systems Formulation, Right: Optimization Objective)
-- Header: Phase 7 Roadmap: Closing the Loop on Grid Stability
-- Subheader: Model Predictive Control (MPC) Battery Dispatch for a 10 MW Utility Solar Farm
+### SLIDE 14: PHASE 7b — 2D PARAMETRIC LOOKBACK & HORIZON MAPPING
+- Layout: 2-Column Split (Left: Heatmap & Analysis, Right: Plot 66)
+- Header: Phase 7b: 2D Parametric Horizon & Lookback Optimization
+- Subheader: Identifying the Operational Sweet Spot across 36 Horizon/Lookback Pairs
 - Content:
-  * Grid Code Constraint: IEEE 1547 / Malaysian Grid Code limits ramp rates to ±10% rated capacity/min (1 MW/min on 10 MW farm).
-  * The Reactive Limitation: Traditional low-pass filters react AFTER cloud shading occurs, causing battery exhaustion.
-  * Proposed AI-Predictive MPC Dispatch:
-    - Uses Phase 6 P50 forecast and lower quantile q10 to pre-charge or pre-discharge the BESS before a cloud arrives:
-      min Σ [ w1 · max(0, |ΔP_grid(t+τ)| - R_max)² + w2 · (SoC(t+τ) - SoC_target)² ]
-  * Quantifiable Engineering Deliverable: Prove a 25–35% reduction in required battery capacity (MWh) compared to naive filtering.
+  * Parametric Sweep: 6 Lookbacks [15, 30, 45, 60, 90, 120 min] × 6 Horizons [5, 10, 15, 30, 45, 60 min].
+  * Key Findings:
+    - Lookback Sweet Spot: x = 60 minutes is globally optimal across all horizons.
+    - Parallax Advantage: At operational horizons (td ≥ 30 min), Parallax produces unanimously positive ΔR² gains (up to +0.0096 at 60m).
+- Image Asset: `https://raw.githubusercontent.com/saimanoj446/Renewable-Energy-Forecasting-AI/main/plots/66_ph7_parallax_horizon_heatmap.png`
 
 ---
 
-### SLIDE 15: CONCLUSION & DISCUSSION PROMPTS
-- Layout: 2-Column Split (Left: Delivered Achievements, Right: Strategic Questions)
-- Header: Conclusion & Discussion with Prof. Arup Ratan
-- Subheader: Design-Oriented Project (DOP) Milestone Summary
-- Content Left (Delivered This Sprint):
-  * Solved solar noon overshoot physically using GHI_clear(t+60).
-  * Ingested satellite cloud layers, proving Low Convective Clouds are the #3 predictive feature.
-  * Replaced LSTMs with LightGBM & Variability Index, driving R² to 0.5480, MAE down by 14 W/m², and Skill to +29.10%.
-  * Delivered 81.98% calibrated conformal prediction intervals (CRPS = 42.58 W/m²).
-- Content Right (Questions for Sir):
-  1. For Phase 7, should we prioritize Track 1 (Upwind Satellite Patches) or Track 2 (BESS Ramp-Rate Smoothing) to best suit EEE department goals?
-  2. For the BESS simulation, should we benchmark against a 5 MW or 10 MW utility standard solar park?
-- Footer: Complete code, dataset, and 59 publication plots available at https://github.com/saimanoj446/Renewable-Energy-Forecasting-AI
+### SLIDE 15: PHASE 7c — BREAKING THE DOUBLE PENALTY CEILING
+- Layout: 2-Column Split (Left: Physics & Causal EWMA Filter, Right: Plot 68)
+- Header: Phase 7c: Breaking the "Double Penalty" Ceiling
+- Subheader: Target Aggregation & Real-Time Online EWMA Causal Filtering
+- Content:
+  * Why Point MSE Hit a Ceiling (R² ≈ 0.54):
+    - Ground pyranometer measures pinhole micro-turbulence; regional satellite grid (11 km) cannot pinpoint cloud edges in seconds.
+    - A shadow forecast 2 minutes early gets penalized TWICE by point MSE ("Double Penalty Effect").
+  * The Breakthrough: Align with Utility Market Operating Blocks:
+    - 1-Min Instantaneous: R² = 0.6684 (Skill = +32.41%)
+    - 5-Min CAISO RTD Block: R² = 0.7164 🏆 (Skill = +36.62%, RMSE = 149.3 W/m²)
+    - 15-Min Market Dispatch Block: R² = 0.7633 🏆 (Skill = +41.14%, RMSE = 131.3 W/m²)
+  * Online EWMA Causal Filter: b_t = 0.85 b_{t-1} + 0.15 (y_t - y_hat_t) tracks monsoon diurnal shifts without lookahead.
+- Image Asset: `https://raw.githubusercontent.com/saimanoj446/Renewable-Energy-Forecasting-AI/main/plots/68_ph7c_target_aggregation_breakthrough.png`
+
+---
+
+### SLIDE 16: PHASE 8 — DYNAMIC PV ARRAY POWER & THERMAL INERTIA
+- Layout: 2-Column Split (Left: Sandia Model & AC Power, Right: Plot 71)
+- Header: Phase 8: Physics-Informed PV Array Power Conversion
+- Subheader: Modeling Sandia Thermal Capacitance Lag & Monocrystalline Temperature Derating
+- Content:
+  * Plant Specifications: 10 MWp DC Utility Solar Farm, 8.0 MW AC Central Inverter (ILR = 1.25, η = 96.5%).
+  * Sandia Thermal Lag Model:
+    - Cell temperature with 1st-order thermal inertia (τ = 7.0 min): T_cell reaches 61.2°C at solar noon.
+    - Midday Thermal Loss: Shaves ~1.45 MW (-14.5% capacity) off the 10 MW plant.
+  * AC Power Forecast Accuracy (+60 min):
+    - 5-Min CAISO RTD AC Power: R² = 0.7248 🏆 (RMSE = 0.88 MW)
+    - 15-Min Market Dispatch: R² = 0.7680 🏆 (RMSE = 0.78 MW)
+- Image Asset: `https://raw.githubusercontent.com/saimanoj446/Renewable-Energy-Forecasting-AI/main/plots/71_ph8_thermal_derating_power_curve.png`
+
+---
+
+### SLIDE 17: PHASE 8 — PREDICTIVE BESS DISPATCH & IEEE 1547 COMPLIANCE
+- Layout: 2-Column Split (Left: Storm Benchmark, Right: Plot 72)
+- Header: Phase 8: BESS Ramp-Rate Smoothing & Grid Stability
+- Subheader: IEEE 1547 Ramp Compliance (±10%/min) and Energy Storage Dispatch
+- Content:
+  * Grid Code Constraint: Maximum ramp rate ≤ 0.80 MW/min on 8 MW AC plant.
+  * Tropical Storm Benchmark:
+    - Uncontrolled PV: 14.8% ramp violations (severe grid trip risk).
+    - Blind Reactive BESS: 3.2% violations — battery depletes to 10% floor and collapses mid-storm.
+    - Predictive AI Dispatch: < 0.2% violations (> 99.8% Compliance 🏆) — pre-charges battery to 65% and pre-steers injection.
+- Image Asset: `https://raw.githubusercontent.com/saimanoj446/Renewable-Energy-Forecasting-AI/main/plots/72_ph8_bess_ramp_smoothing_dispatch.png`
+
+---
+
+### SLIDE 18: PHASE 8 — BESS SIZING PARETO FRONTIER & CAPEX REDUCTION
+- Layout: 2-Column Split (Left: Financial / Engineering Analysis, Right: Plot 73)
+- Header: Phase 8: BESS Sizing Pareto Frontier
+- Subheader: Demonstrating a 32.7% Storage Capacity Reduction for 99.5% Grid Compliance
+- Content:
+  * Pareto Sweep across BESS capacities (0.5 to 4.0 MWh):
+    - Reactive Controller Required Capacity: 2.60 MWh
+    - Predictive AI BESS Required Capacity: 1.75 MWh
+    - Storage Capacity Reduction: 32.7% MWh Savings 🏆 (-0.85 MWh)
+  * Utility Economic Impact:
+    - Saves ~$425,000 in battery CAPEX (@ $500/kWh utility scale) while maintaining strict 99.50% grid code compliance.
+- Image Asset: `https://raw.githubusercontent.com/saimanoj446/Renewable-Energy-Forecasting-AI/main/plots/73_ph8_bess_sizing_pareto_curve.png`
+
+---
+
+### SLIDE 19: CONCLUSION & FINAL DOP DEFENSE SUMMARY
+- Layout: Full Summary Card & Master Progression
+- Header: Design-Oriented Project (DOP) — Final Milestone Summary
+- Subheader: Department of EEE | BITS Pilani Hyderabad | Supervisor: Prof. Arup Ratan
+- Content:
+  * 1. 100% Directives Delivered: Solved solar noon overshoot, ingested Himawari satellite clouds, mapped 3D parallax geometry, and cracked the double penalty barrier (R² = 0.7164 to 0.7633).
+  * 2. Full Power Systems Engineering Loop: Converted predicted GHI into real AC power (accounting for Sandia thermal capacitance) and designed a predictive BESS controller cutting battery requirements by 32.7%.
+  * 3. Publication Deliverables: 73 IEEE-grade figures, fully documented GitHub repository, and complete modular scripts.
+- Footer: Complete code and 73 publication plots available at https://github.com/saimanoj446/Renewable-Energy-Forecasting-AI
 ```
 
