@@ -1,0 +1,19 @@
+================================================================================
+PHASE 7: CLOUD PARALLAX & RAY-TRACING SHADOW ENHANCED RESULTS
+Department of EEE | BITS Pilani Hyderabad | Supervisor: Prof. Arup Ratan
+================================================================================
+
+1. BENCHMARK SCORECARD (+60 MINUTE LEAD TIME ON OCT-DEC 2025 HOLDOUT):
+   - Smart Persistence Baseline: RMSE: 247.22 W/m²
+   - Phase 5/6 Baseline:         R²: 0.5343 | RMSE: 198.01 W/m² | MAE: 149.24 W/m² | Skill: +19.91%
+   - Phase 7 Parallax-Enhanced:  R²: 0.5423 | RMSE: 196.30 W/m² | MAE: 147.69 W/m² | Skill: +20.60%
+
+2. NET PHYSICAL ADVANTAGE:
+   - R² Improvement:   +0.0080
+   - RMSE Improvement: -1.71 W/m²
+   - MAE Improvement:  -1.55 W/m²
+
+3. GENERATED PUBLICATION PLOTS:
+   - Plot 63: 63_ph7_parallax_geometry.png (Diurnal Shadow Displacement Curves)
+   - Plot 64: 64_ph7_parallax_feature_importance.png (Parallax Feature Gains)
+   - Plot 65: 65_ph7_walkforward_parallax.png (Head-to-Head Tracking Profile)

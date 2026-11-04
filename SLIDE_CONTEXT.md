@@ -259,3 +259,4 @@ Use these exact raw image links to embed the figures into each corresponding sli
   2. For the BESS simulation, should we benchmark against a 5 MW or 10 MW utility standard solar park?
 - Footer: Complete code, dataset, and 59 publication plots available at https://github.com/saimanoj446/Renewable-Energy-Forecasting-AI
 ```
+
