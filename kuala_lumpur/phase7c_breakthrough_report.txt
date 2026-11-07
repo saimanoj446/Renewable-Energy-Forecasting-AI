@@ -1,0 +1,19 @@
+================================================================================
+PHASE 7c: RESOLVING THE DOUBLE PENALTY IN TROPICAL SOLAR FORECASTING
+Department of EEE | BITS Pilani Hyderabad | Supervisor: Prof. Arup Ratan
+================================================================================
+
+1. TARGET AGGREGATION & ONLINE BIAS CORRECTION BENCHMARK (+60 MIN HORIZON):
+
+                              Target   R2_Raw  R2_EWMA  RMSE_EWMA   MAE_EWMA  Skill_EWMA  Ramp_MAE
+              1-Minute Instantaneous 0.535361 0.668398 167.098312 125.011653   32.410279 38.610381
+5-Minute Rolling Average [CAISO RTD] 0.573578 0.716395 149.298486 111.933090   36.617138 18.808610
+   15-Minute Market Block [Dispatch] 0.618074 0.763254 131.307082  99.241671   41.139641 11.012798
+
+2. KEY BREAKTHROUGHS DELIVERED:
+   - Instantaneous 1-minute GHI is corrupted by pinhole cloud edge turbulence (<60 sec).
+   - Aggregating to 5-Minute average blocks (CAISO Real-Time Dispatch Standard) causes R² to leap
+     from 0.6684 to 0.7164 🏆 with RMSE dropping from 167.1 to 149.3 W/m²!
+   - Aggregating to 15-Minute market dispatch blocks achieves R² = 0.7633 🏆!
+   - Real-time online EWMA causal residual filtering (e_t = GHI_t - GHI_hat_t) steadily eliminates diurnal drift.
+   - Damped parallax (alpha_eff = 0.45) prevents geometric spatial overshooting.

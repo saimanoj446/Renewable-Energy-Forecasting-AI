@@ -19,5 +19,6 @@ ENV/
 Thumbs.db
 .DS_Store
 
-# Large Generated Datasets
+# Large Generated Datasets & Colab Archives
 kuala_lumpur/kuala_lumpur_1min.csv
+*.zip

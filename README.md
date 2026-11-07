@@ -2,7 +2,7 @@
 
 Physics-informed and machine learning models for short-term solar and wind power forecasting, integrated with grid stability analysis.
 
-**Current Phase:** Phase 5 ✅ — Satellite-Enhanced Machine Learning & Multi-Horizon Deep Learning Benchmarking
+**Current Phase:** Phase 8 ✅ — Dynamic PV Array Power Conversion & Predictive BESS Grid Stability Dispatch (IEEE 1547 Ramp Compliance)
 
 **Design-Oriented Project (DOP)** | Electrical & Electronics Engineering Department | **BITS Pilani, Hyderabad Campus**  
 **Under the Guidance of:** Prof. Arup Ratan
@@ -23,6 +23,11 @@ This repository implements an end-to-end multi-phase AI forecasting framework ac
   - **Phase 3d:** Validation of Prof. Arup Ratan's **"8 features × 60 minutes = 480 data points"** formulation using a PyTorch 2-layer LSTM sequence model across multi-horizons (+1m, +5m, +15m, +30m, +60m) and Sandia/IEC photovoltaic MPP power conversion.
 - **Phase 4:** Diurnal Solar Geometry & Noon Peak Analysis ($GHI_{\text{clear}}$ normalization, recurrent fusion with future astronomy to eliminate linear trend overshoot past 12:00 PM).
 - **Phase 5:** Ingestion of Geostationary Satellite Cloud Cover (Low/Mid/High layers) via Open-Meteo Satellite API, and deployment of **LightGBM & XGBoost Gradient Boosted Trees** achieving top $t+60$ forecast accuracy ($R^2 = 0.5392$, $\text{Skill} = +28.42\%$).
+- **Phase 6:** Conformalized Quantile Regression (CQR) & Arc-Length Variability Index ($VI_{30}$), establishing an $81.98\%$ calibrated prediction interval and $R^2 = 0.5480$ 🏆.
+- **Phase 7:** 3D Cloud Parallax & Ray-Tracing Shadow Model ($\vec{d}_{\text{shadow}} = H_c \tan\theta_s$, $\vec{d}_{\text{parallax}} = H_c \tan\theta_v$, net offset $D_{\text{net}}$), proving `dx_net_offset` is the #3 most influential feature.
+- **Phase 7b:** 2D Parametric Horizon & Lookback Optimization ($36\text{ pairs}$ across $x \in [15, 120]\text{m}, t_d \in [5, 60]\text{m}$), proving $x = 60\text{m}$ is the universal sweet spot and parallax produces unanimously positive gains at $t_d \ge 30\text{m}$.
+- **Phase 7c:** Breaking the "Double Penalty" Ceiling via Target Aggregation (1-min vs 5-min CAISO RTD vs 15-min Dispatch) and causal online EWMA residual filtering ($b_t = 0.85 b_{t-1} + 0.15 e_t$), achieving **$R^2 = 0.7164$** (5-min) and **$R^2 = 0.7633$** (15-min).
+- **Phase 8:** Physics-Informed PV Array Power Conversion (Sandia thermal lag $\tau = 7\text{ min}$, $1.45\text{ MW}$ midday derating) & Predictive BESS Grid Stability Dispatch, proving **$99.8\%$ IEEE 1547 ramp compliance** and a **$32.7\%$ battery capacity sizing reduction**.
 
 ---
 
@@ -63,6 +68,12 @@ Input Tensor: `(batch_size, 60, 8)` = **480 data points per sample** (evaluated 
 | **Phase 5** | **GBDT Ensemble** | **50% LightGBM + 50% XGBoost** | **0.5387** | **197.16** | **148.95** | **+28.39%** |
 | **Phase 6** | **Physics-P50 Conformal Hybrid** | **Variability Index (VI) + Satellite + Conformal CQR** | **0.5480** 🏆 | **195.18** 🏆 | **141.90** 🏆 | **+29.10%** 🏆 |
 | *Phase 6 (Probabilistic)* | *Conformal 80% Prediction Interval* | *Calibrated Coverage (PICP) = **81.98%** (Nominal 80%)* | *PINAW: 33.7%* | *CRPS: 42.58 W/m²* | *Pinball Loss: 42.5 W/m²* | *IEEE Standard ✅* |
+| **Phase 7** | 3D Ray-Tracing Parallax | Ground Pyranometer + Damped Parallax Vector ($D_{\text{net}}$) | 0.5423 | 196.40 | 142.10 | +28.90% |
+| **Phase 7b** | 2D Parametric Sweet Spot | Optimal Lookback $x=60\text{m}$ across Horizons $t_d \in [5, 60]\text{m}$ | 0.7903 (5m) $\to$ 0.5423 (60m) | — | — | Parallax gain $\forall t_d \ge 30\text{m}$ |
+| **Phase 7c** | **Anti-Double Penalty + EWMA** | **5-Min CAISO RTD Target Block ($t+60\text{m}$)** | **0.7164 🏆** | **149.30 🏆** | **111.93 🏆** | **+36.62% 🏆** |
+| **Phase 7c** | **Anti-Double Penalty + EWMA** | **15-Min Market Dispatch Block ($t+60\text{m}$)** | **0.7633 🏆** | **131.31 🏆** | **99.24 🏆** | **+41.14% 🏆** |
+| **Phase 8** | **Dynamic PV AC Power** | **10 MWp DC / 8 MW AC Farm (Sandia Thermal Lag $\tau=7\text{m}$)** | **0.7248 (5m)** / **0.7680 (15m)** | **0.88 MW** | **0.51 MW** | **14.5% Midday Derating Loss** |
+| **Phase 8** | **Predictive BESS Grid Dispatch** | **IEEE 1547 Ramp Smoothing ($\pm 0.80\text{ MW/min}$ Limit)** | **> 99.8% Compliance 🏆** | **0.18% Viol** | — | **32.7% BESS Sizing Reduction** |
 
 ---
 
@@ -76,6 +87,12 @@ All generated publication plots are stored in [`plots/`](plots/):
 - **Plots 45–48:** Phase 4b Residual LSTM and Solar Noon Diurnal Analysis.
 - **Plots 49–51:** Phase 4c Dedicated $t+60$ Fusion with Astronomical Ceiling Bounds.
 - **Plots 52–55:** Phase 5 Satellite Cloud Feature Importance, GBDT Model Comparisons, and Continuous Walk-Forward Tracking.
+- **Plots 56–59:** Phase 6 Conformalized Quantile Fan Charts, Calibration Diagrams, and Physics Feature Importance.
+- **Plots 60–62:** Phase 7b 2D Parametric Lookback vs Horizon Optimization Heatmaps and Pareto Curves.
+- **Plots 63–65:** Phase 7 3D Cloud Parallax & Ray-Tracing Geometry, Feature Importance, and Walk-Forward Profiles.
+- **Plots 66–67:** Phase 7b Parallax Horizon Benefit Heatmaps and Frontiers.
+- **Plots 68–70:** Phase 7c Target Aggregation Breakthrough, Walk-Forward Head-to-Head Comparisons, and Online EWMA Filter Impact.
+- **Plots 71–73:** Phase 8 Sandia Module Thermal Derating, IEEE 1547 BESS Convective Storm Smoothing, and Sizing Pareto Frontier.
 
 ---
 
@@ -87,7 +104,7 @@ All generated publication plots are stored in [`plots/`](plots/):
 ├── 03_model_comparison.py            # Phase 2: RF vs XGBoost vs GBM vs SVR comparison
 ├── 04_key_features.py                # Phase 3a: 4-method feature importance on hourly data
 ├── 05_rolling_window_forecast.py     # Phase 3b: Rolling walk-forward hourly evaluation
-├── kuala_lumpur/                     # Phase 3, 4, 5: 1-Minute Tropical Climate Research
+├── kuala_lumpur/                     # Phase 3 to 8: 1-Minute Tropical Climate Research
 │   ├── 06_prepare_1min_dataset.py    # Merges 365 daily GHI files + Open-Meteo weather
 │   ├── 07_minute_eda.py              # 1-min EDA and 480-point feature reduction proof
 │   ├── 08_lstm_forecast.py           # Phase 3d: PyTorch 2-layer LSTM sequence model
@@ -95,13 +112,20 @@ All generated publication plots are stored in [`plots/`](plots/):
 │   ├── 10_phase4b_ghi_clearsky_lstm.py # Phase 4b: GHI + GHI_clear residual model
 │   ├── 11_phase4c_t60_specialist.py  # Phase 4c: Dedicated t+60 specialist model
 │   ├── 12_phase5_satellite_lightgbm.py # Phase 5: Satellite cloud layers + LightGBM/XGBoost
+│   ├── 13_phase6_probabilistic_conformal.py # Phase 6: Conformalized Quantile Regression (CQR)
+│   ├── 14_lookback_horizon_optimization.py  # Phase 7b: 36-cell parametric grid sweep
+│   ├── 15_phase7_parallax_cloud_model.py    # Phase 7: 3D Cloud Parallax & Ray-Tracing
+│   ├── 16_parallax_lookback_horizon_optimization.py # Phase 7b: Parallax parametric mapping
+│   ├── 17_phase7c_anti_double_penalty_model.py      # Phase 7c: Target aggregation & online EWMA
+│   ├── 18_phase8_pv_power_grid_balance.py           # Phase 8: PV Thermal power + BESS dispatch
 │   ├── kuala_lumpur_1min.csv         # Merged 1-min ground dataset (262,020 records)
 │   ├── kl_hourly_weather.csv         # Open-Meteo historical weather archive
-│   ├── plots/                        # Kuala Lumpur specific figures (plots 29–55)
+│   ├── plots/                        # Kuala Lumpur specific figures (plots 29–73)
 │   └── README.md                     # Kuala Lumpur sub-study documentation
-├── plots/                            # Master figure directory (plots 01–55)
+├── plots/                            # Master figure directory (plots 01–73)
 ├── presentation.html                 # Interactive browser presentation deck
 ├── ppt_content.md                    # Slide-by-slide markdown script & speaker notes
+├── SLIDE_CONTEXT.md                  # Comprehensive slide generation specifications & raw links
 ├── Solar_Forecasting_Prof_Meeting.pptx # PowerPoint presentation deck
 ├── dop_project_guide.md              # Research references & mathematical methodology
 ├── midsem_report.md                  # Comprehensive mid-semester project report
@@ -112,36 +136,15 @@ All generated publication plots are stored in [`plots/`](plots/):
 
 ## 🚀 How to Run
 
-### Local Execution (PowerShell / Command Prompt)
-```powershell
-# Run the 1-minute Kuala Lumpur LSTM baseline:
-python kuala_lumpur/08_lstm_forecast.py
+### Google Colab / Local Execution
+```python
+# 1. Pull the latest pipeline from GitHub:
+!git pull origin main
 
-# Run the Phase 5 Satellite-Enhanced LightGBM model:
-python kuala_lumpur/12_phase5_satellite_lightgbm.py
+# 2. Run Phase 7c Breakthrough Model (R² = 0.7164 on 5-min RTD, R² = 0.7633 on 15-min Dispatch):
+%run kuala_lumpur/17_phase7c_anti_double_penalty_model.py
+
+# 3. Run Phase 8 Dynamic PV Power & BESS Grid-Balancing Simulation (Plots 71, 72, 73):
+%run kuala_lumpur/18_phase8_pv_power_grid_balance.py
 ```
-
----
-
-## 🔮 Phase 6 & 7 Roadmap (Next Meeting / Future Work)
-
-### 1. Upwind Spatial Advection & Advanced Feature Physics (Breaking the $t+60$ Ceiling)
-- **$5 \times 5$ Spatial Satellite Grid Patches:** Ingest Himawari-8/9 geostationary channels (Band 03 visible albedo + Band 13 IR cloud-top temperature at 10-min, 2 km resolution) over a spatial patch. Project upwind cloud vectors: $\vec{x}_{\text{upwind}} = \vec{x}_{\text{station}} - \vec{v}_{850\text{hPa}} \cdot \Delta t$.
-- **Cloud Enhancement & Volatility Index ($VI$):** Account for forward Mie scattering ($k_t > 1.2$) and high-frequency ramp volatility ($\sigma(\Delta GHI_{1\text{m}})$).
-- **Causal Wavelet / VMD Decomposition:** Split 1-minute GHI into intrinsic diurnal, mesoscale cloud, and microscale turbulence frequency bands.
-
-### 2. Next-Generation Architectures
-- **Stacking Hybrid:** Combine Phase 4c 64-dim LSTM sequence embeddings with Phase 5 satellite features in LightGBM.
-- **Temporal Fusion Transformer (TFT) & PatchTST:** Native separation of past observed sequences and known future astronomy ($GHI_{\text{clear}}$).
-- **Asymmetric Physics-Guided Ramp Loss:** Custom objective heavily penalizing missed sharp drop-offs and non-physical values.
-
-### 3. Conformal Probabilistic Quantile Forecasting (High IEEE Value)
-- Multi-quantile LightGBM / CatBoost ($\alpha \in \{0.10, 0.50, 0.90\}$) producing an 80% Prediction Interval $[\hat{q}_{10}, \hat{q}_{90}]$.
-- **Conformalized Quantile Regression (CQR):** Guarantees exact empirical coverage without Gaussian residual assumptions.
-- Metrics: PICP ($\ge 80\%$), PINAW (band sharpness), and Continuous Ranked Probability Score (CRPS).
-
-### 4. Power Systems Integration: BESS Ramp-Rate Smoothing & Grid Stability
-- **IEEE 1547 / Malaysian Grid Code Compliance:** Enforcing a $\pm 10\%/\text{min}$ maximum ramp-rate limit on a simulated 10 MW PV plant.
-- **Predictive Model Predictive Control (MPC):** Using $+5\text{m}, +15\text{m}, +60\text{m}$ forecasts and lower quantile $\hat{q}_{10}$ to pre-charge/discharge the BESS before cloud arrival.
-- **Quantifiable Outcome:** Demonstrate a 25–35% reduction in required battery capacity (MWh) compared to reactive low-pass filtering.
 
