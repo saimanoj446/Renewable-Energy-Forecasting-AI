@@ -99,6 +99,7 @@ All generated publication plots are stored in [`plots/`](plots/):
 - **Plots 68–70:** Phase 7c Target Aggregation Breakthrough, Walk-Forward Head-to-Head Comparisons, and Online EWMA Filter Impact.
 - **Plots 71–73:** Phase 8 Sandia Module Thermal Derating, IEEE 1547 BESS Convective Storm Smoothing, and Sizing Pareto Frontier.
 - **Plots 74–78:** Phase 9 SAPEC Benchmark Comparison, 2D Parametric Sweep Heatmaps, Pareto Frontier across Lookbacks, Multi-Horizon Walk-Forward Tracking, and Enriched Feature Importance.
+- **Plots 79–81:** 3D Parametric Response Surfaces ($R^2$ vs $x$ and $t_d$, $\text{MSE}$ vs $x$ and $t_d$, and Dual-Panel Coupled Manifold) requested by Prof. Arup Ratan.
 
 ---
 

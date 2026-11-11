@@ -46,6 +46,9 @@ Use these exact raw image links to embed the figures into each corresponding sli
 | **Plot 76** | Multi-Horizon Pareto Frontiers | `https://raw.githubusercontent.com/saimanoj446/Renewable-Energy-Forecasting-AI/main/plots/76_ph9_pareto_frontier_all_lookbacks.png` |
 | **Plot 77** | Optimal Walk-Forward Dispatch Profiles | `https://raw.githubusercontent.com/saimanoj446/Renewable-Energy-Forecasting-AI/main/plots/77_ph9_walkforward_5m_15m_optimal.png` |
 | **Plot 78** | Enriched Feature Importance (Top 25) | `https://raw.githubusercontent.com/saimanoj446/Renewable-Energy-Forecasting-AI/main/plots/78_ph9_feature_importance_enriched.png` |
+| **Plot 79** | 3D Response Surface: R² vs (x, td) | `https://raw.githubusercontent.com/saimanoj446/Renewable-Energy-Forecasting-AI/main/plots/79_ph9_3d_surface_r2_x_td.png` |
+| **Plot 80** | 3D Response Surface: MSE vs (x, td) | `https://raw.githubusercontent.com/saimanoj446/Renewable-Energy-Forecasting-AI/main/plots/80_ph9_3d_surface_mse_x_td.png` |
+| **Plot 81** | Dual 3D Response Surface: R² and MSE | `https://raw.githubusercontent.com/saimanoj446/Renewable-Energy-Forecasting-AI/main/plots/81_ph9_dual_3d_surface_r2_mse.png` |
 
 ---
 
