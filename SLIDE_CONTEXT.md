@@ -41,6 +41,11 @@ Use these exact raw image links to embed the figures into each corresponding sli
 | **Plot 71** | Thermal Derating & AC Power Forecast | `https://raw.githubusercontent.com/saimanoj446/Renewable-Energy-Forecasting-AI/main/plots/71_ph8_thermal_derating_power_curve.png` |
 | **Plot 72** | BESS Convective Storm Ramp Smoothing | `https://raw.githubusercontent.com/saimanoj446/Renewable-Energy-Forecasting-AI/main/plots/72_ph8_bess_ramp_smoothing_dispatch.png` |
 | **Plot 73** | BESS Sizing Pareto Frontier | `https://raw.githubusercontent.com/saimanoj446/Renewable-Energy-Forecasting-AI/main/plots/73_ph8_bess_sizing_pareto_curve.png` |
+| **Plot 74** | Phase 7c vs Phase 9 Stacking Benchmark | `https://raw.githubusercontent.com/saimanoj446/Renewable-Energy-Forecasting-AI/main/plots/74_ph9_benchmark_phase7c_vs_phase9.png` |
+| **Plot 75** | Optimal 2D Lookback-Horizon Heatmaps | `https://raw.githubusercontent.com/saimanoj446/Renewable-Energy-Forecasting-AI/main/plots/75_ph9_optimal_x_td_heatmaps.png` |
+| **Plot 76** | Multi-Horizon Pareto Frontiers | `https://raw.githubusercontent.com/saimanoj446/Renewable-Energy-Forecasting-AI/main/plots/76_ph9_pareto_frontier_all_lookbacks.png` |
+| **Plot 77** | Optimal Walk-Forward Dispatch Profiles | `https://raw.githubusercontent.com/saimanoj446/Renewable-Energy-Forecasting-AI/main/plots/77_ph9_walkforward_5m_15m_optimal.png` |
+| **Plot 78** | Enriched Feature Importance (Top 25) | `https://raw.githubusercontent.com/saimanoj446/Renewable-Energy-Forecasting-AI/main/plots/78_ph9_feature_importance_enriched.png` |
 
 ---
 
