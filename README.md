@@ -2,7 +2,7 @@
 
 Physics-informed and machine learning models for short-term solar and wind power forecasting, integrated with grid stability analysis.
 
-**Current Phase:** Phase 8 ✅ — Dynamic PV Array Power Conversion & Predictive BESS Grid Stability Dispatch (IEEE 1547 Ramp Compliance)
+**Current Phase:** Phase 9 ✅ — SAPEC-Grade 2D Parametric Horizon Sweep & Multi-Model Forecasting (Plots 74–78)
 
 **Design-Oriented Project (DOP)** | Electrical & Electronics Engineering Department | **BITS Pilani, Hyderabad Campus**  
 **Under the Guidance of:** Prof. Arup Ratan
@@ -28,6 +28,7 @@ This repository implements an end-to-end multi-phase AI forecasting framework ac
 - **Phase 7b:** 2D Parametric Horizon & Lookback Optimization ($36\text{ pairs}$ across $x \in [15, 120]\text{m}, t_d \in [5, 60]\text{m}$), proving $x = 60\text{m}$ is the universal sweet spot and parallax produces unanimously positive gains at $t_d \ge 30\text{m}$.
 - **Phase 7c:** Breaking the "Double Penalty" Ceiling via Target Aggregation (1-min vs 5-min CAISO RTD vs 15-min Dispatch) and causal online EWMA residual filtering ($b_t = 0.85 b_{t-1} + 0.15 e_t$), achieving **$R^2 = 0.7164$** (5-min) and **$R^2 = 0.7633$** (15-min).
 - **Phase 8:** Physics-Informed PV Array Power Conversion (Sandia thermal lag $\tau = 7\text{ min}$, $1.45\text{ MW}$ midday derating) & Predictive BESS Grid Stability Dispatch, proving **$99.8\%$ IEEE 1547 ramp compliance** and a **$32.7\%$ battery capacity sizing reduction**.
+- **Phase 9:** SAPEC 2027 Model Optimization & 2D ($x, t_d$) Global Grid Sweep ($x \in [15, 120]\text{m}, t_d \in [5, 60]\text{m}$). Establishes peak operational accuracy of **$R^2 = 0.8553$** ($\text{RMSE} = 106.59\text{ W/m}^2$, $\text{Skill} = +20.44\%$) at $t_d = 5\text{ min}$ (CAISO Real-Time Dispatch / Microgrid BESS timescale) with $x^* = 60\text{ min}$, and maps the complete operational Pareto frontier across all 36 combinations for power electronics inverter control.
 
 ---
 
@@ -74,6 +75,10 @@ Input Tensor: `(batch_size, 60, 8)` = **480 data points per sample** (evaluated 
 | **Phase 7c** | **Anti-Double Penalty + EWMA** | **15-Min Market Dispatch Block ($t+60\text{m}$)** | **0.7633 🏆** | **131.31 🏆** | **99.24 🏆** | **+41.14% 🏆** |
 | **Phase 8** | **Dynamic PV AC Power** | **10 MWp DC / 8 MW AC Farm (Sandia Thermal Lag $\tau=7\text{m}$)** | **0.7248 (5m)** / **0.7680 (15m)** | **0.88 MW** | **0.51 MW** | **14.5% Midday Derating Loss** |
 | **Phase 8** | **Predictive BESS Grid Dispatch** | **IEEE 1547 Ramp Smoothing ($\pm 0.80\text{ MW/min}$ Limit)** | **> 99.8% Compliance 🏆** | **0.18% Viol** | — | **32.7% BESS Sizing Reduction** |
+| **Phase 9** | **SAPEC Peak Operational (t+5m)** | **Global Optimum ($x^*=60\text{m}, t_d^*=5\text{m}$) — RTD BESS Control** | **0.8553 🏆** | **106.59 🏆** | **64.09 🏆** | **+20.44% (Peak R²)** |
+| **Phase 9** | **SAPEC Intra-Hour (t+10m)** | **$x^*=90\text{m}, t_d=10\text{m}$ — Active Power Ramp Mitigator** | **0.7960** | **126.44** | **82.03** | **+24.13%** |
+| **Phase 9** | **SAPEC Intra-Hour (t+15m)** | **$x^*=90\text{m}, t_d=15\text{m}$ — CAISO 15-Min Market Dispatch** | **0.7587** | **137.39** | **93.96** | **+25.72%** |
+| **Phase 9** | **SAPEC Horizon Sweep (t+30m)** | **$x^*=90\text{m}, t_d=30\text{m}$ — Sub-Hourly Firm Capacity** | **0.7040** | **151.95** | **110.45** | **+27.62%** |
 
 ---
 
@@ -93,6 +98,7 @@ All generated publication plots are stored in [`plots/`](plots/):
 - **Plots 66–67:** Phase 7b Parallax Horizon Benefit Heatmaps and Frontiers.
 - **Plots 68–70:** Phase 7c Target Aggregation Breakthrough, Walk-Forward Head-to-Head Comparisons, and Online EWMA Filter Impact.
 - **Plots 71–73:** Phase 8 Sandia Module Thermal Derating, IEEE 1547 BESS Convective Storm Smoothing, and Sizing Pareto Frontier.
+- **Plots 74–78:** Phase 9 SAPEC Benchmark Comparison, 2D Parametric Sweep Heatmaps, Pareto Frontier across Lookbacks, Multi-Horizon Walk-Forward Tracking, and Enriched Feature Importance.
 
 ---
 
