@@ -912,3 +912,4 @@ print("  [SUCCESS] Phase 9 Complete! Plots 74–78 generated.")
 print(f"  SAPEC Primary Result: 5-Min RTD R² = {r2_ewma_5m:.4f} | 15-Min Dispatch R² = {r2_ewma_15m:.4f}")
 print(f"  Global Optimal: x* = {opt_x} min, td* = {opt_td} min  →  R² = {opt_r2:.4f}")
 print("=" * 80)
+
