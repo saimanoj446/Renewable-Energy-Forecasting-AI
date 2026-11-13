@@ -21,4 +21,6 @@ Thumbs.db
 
 # Large Generated Datasets & Colab Archives
 kuala_lumpur/kuala_lumpur_1min.csv
+kuala_lumpur/kl_satellite_clouds_2025.csv
+catboost_info/
 *.zip
