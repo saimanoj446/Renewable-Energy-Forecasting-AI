@@ -4,6 +4,8 @@ Physics-informed and machine learning models for short-term solar and wind power
 
 **Current Phase:** Phase 9 ✅ — SAPEC-Grade 2D Parametric Horizon Sweep & Multi-Model Forecasting (Plots 74–78)
 
+**📄 Conference Paper Draft:** [`sapec_paper_draft.md`](sapec_paper_draft.md) — Full IEEE 4-page digest for **SAPEC 2027** (Track 9: ML & AI in Power Electronics, IIT Bombay, June 3–5, 2027). Digest deadline: **November 30, 2026**.
+
 **Design-Oriented Project (DOP)** | Electrical & Electronics Engineering Department | **BITS Pilani, Hyderabad Campus**  
 **Under the Guidance of:** Prof. Arup Ratan
 
