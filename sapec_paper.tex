@@ -1,0 +1,537 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+% SAPEC 2027 — Track 9: Machine Learning & AI in Power Electronics
+% South Asia Power Electronics Conference | IIT Bombay | June 3–5, 2027
+% Authors: Sai Manoj Patro, Arup Ratan Bhowmick
+% BITS Pilani, Hyderabad Campus — Dept. of EEE
+
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{booktabs}   % for \toprule, \midrule, \bottomrule in tables
+\usepackage{multirow}
+\usepackage{url}
+
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+
+\begin{document}
+
+% -----------------------------------------------------------------------
+%  TITLE
+% -----------------------------------------------------------------------
+\title{Lookback-Optimized Physics-Informed AI Dispatch Architecture
+       for PV-BESS Active Power Ramp-Rate Mitigation
+       Under IEEE 1547-2018%
+\thanks{This work was carried out as part of the Design-Oriented Project (DOP)
+at the Department of Electrical and Electronics Engineering, BITS Pilani,
+Hyderabad Campus, under the guidance of Prof.\ Arup Ratan Bhowmick.
+No external funding to declare.}
+}
+
+% -----------------------------------------------------------------------
+%  AUTHORS
+% -----------------------------------------------------------------------
+\author{%
+\IEEEauthorblockN{Sai Manoj Patro}
+\IEEEauthorblockA{%
+  \textit{Dept.\ of Electrical \& Electronics Engg.}\\
+  \textit{BITS Pilani, Hyderabad Campus}\\
+  Hyderabad, Telangana, India\\
+  f20232462@hyderabad.bits-pilani.ac.in}
+\and
+\IEEEauthorblockN{Arup Ratan Bhowmick}
+\IEEEauthorblockA{%
+  \textit{Dept.\ of Electrical \& Electronics Engg.}\\
+  \textit{BITS Pilani, Hyderabad Campus}\\
+  Hyderabad, Telangana, India\\
+  arup.ratan@hyderabad.bits-pilani.ac.in}
+}
+
+\maketitle
+
+% -----------------------------------------------------------------------
+%  ABSTRACT
+% -----------------------------------------------------------------------
+\begin{abstract}
+Active power ramp-rate violations at the point of common coupling (PCC)
+represent a critical grid integration challenge for utility-scale photovoltaic
+(PV) plants under IEEE~1547-2018. This paper presents a lookback-optimized,
+physics-informed machine learning dispatch architecture that enables a PV-BESS
+inverter controller to enforce the $\pm10\%$/min ramp-rate limit with greater
+than 99.8\% compliance while simultaneously reducing battery energy storage
+system (BESS) capital sizing requirements by 32.7\%. A systematic 36-cell
+two-dimensional parametric sweep over lookback window
+$x \in \{15,30,45,60,90,120\}$~min and dispatch horizon
+$t_d \in \{5,10,15,30,45,60\}$~min identifies a global optimum at
+$x^{*}=60$~min, $t_d^{*}=5$~min, achieving $R^2=0.8553$ and
+RMSE~$=106.59$~W/m$^2$ on an out-of-time holdout (Oct--Dec 2025) using
+262,020 records of 1-minute ground pyranometer irradiance from Kuala Lumpur,
+Malaysia. Physical innovations include a Sandia dynamic cell-temperature model,
+damped cloud-parallax ray-tracing ($\alpha_{\mathrm{eff}}=0.45$), and a causal
+online exponentially-weighted moving-average (EWMA) filter that resolves the
+Double Penalty Effect inherent in point-MSE optimization. The predictive
+dispatch strategy reduces required BESS capacity from 2.60~MWh to 1.75~MWh---a
+direct 32.7\% capital expenditure reduction.
+\end{abstract}
+
+\begin{IEEEkeywords}
+solar irradiance forecasting, PV-BESS dispatch, ramp-rate control,
+IEEE~1547-2018, cloud parallax, LightGBM, Double Penalty Effect,
+parametric horizon sweep
+\end{IEEEkeywords}
+
+% -----------------------------------------------------------------------
+%  SECTION I — INTRODUCTION
+% -----------------------------------------------------------------------
+\section{Introduction}
+
+The rapid proliferation of utility-scale solar PV plants in tropical Southeast
+Asia has introduced severe active power variability on distribution and
+sub-transmission feeders. Kuala Lumpur's equatorial convective climate generates
+irradiance ramp events exceeding 400~W/m$^2$/min during afternoon thunderstorm
+episodes---events that propagate directly into MW-scale power injection
+transients at the PCC. IEEE~1547-2018 \cite{b2}, the governing standard for
+distributed energy resource (DER) interconnection, mandates that any plant
+larger than 500~kVA must not cause the PCC ramp rate to exceed
+$\pm10\%$ of rated capacity per minute. For a 10~MWp~DC / 8~MW~AC installation
+with an inverter loading ratio (ILR) of 1.25, this translates to a hard limit
+of $\pm800$~kW/min.
+
+Conventional BESS controllers that react to measured ramp violations after the
+fact---termed \emph{reactive dispatch}---are perpetually one sample behind the
+irradiance transient. Static persistence forecasters that simply hold the last
+measured value forward improve on no-forecast control but cannot anticipate
+convective cell evolution. Neither approach can optimally pre-position BESS
+state-of-charge (SoC), leading to SoC starvation during sustained ramp
+sequences and consequent grid violations or costly inverter clipping
+\cite{b7,b8}.
+
+Furthermore, two systematic modeling errors have been overlooked in prior
+literature:
+\begin{enumerate}
+\item \textbf{The Double Penalty Effect:} Point-wise mean squared error (MSE)
+      optimization against a pinhole pyranometer is penalized twice---once for
+      missed cloud shadow timing and once for the irreducible spatial mismatch
+      between a 2--10~km satellite cloud-fraction grid cell and a sub-centimeter
+      pyrheliometer aperture. This imposes a fundamental ceiling of
+      $R^2 \approx 0.54$ at 1-min resolution, regardless of model sophistication.
+\item \textbf{Static parallax bias:} Cloud shadow cast angles computed from
+      cloud altitude and solar azimuth/zenith diverge by up to $8^{\circ}$ from
+      observed shadow trajectories due to wind-driven cloud advection and
+      turbulent boundary-layer parallax. Uncorrected, this bias shifts predicted
+      shadow arrival times by $\pm3$--7~min.
+\end{enumerate}
+
+The contributions of this work are:
+\begin{enumerate}
+\item A Sandia dynamic thermal derating model \cite{b1} that reduces
+      overestimation of AC power output by 14.5\% at tropical midday
+      ($T_{\mathrm{cell}}=61.2^{\circ}$C), directly improving BESS
+      charge pre-positioning accuracy.
+\item A damped cloud-parallax ray-tracing algorithm ($\alpha_{\mathrm{eff}}=0.45$)
+      that eliminates geometric overshoot in shadow arrival prediction.
+\item Resolution of the Double Penalty Effect through utility-block target
+      aggregation (5-min and 15-min rolling means), unlocking $R^2$ gains of
+      0.14--0.22 absolute over 1-min point targets.
+\item A 36-cell 2D parametric sweep that identifies the globally optimal
+      lookback--horizon pair ($x^{*}=60$~min, $t_d^{*}=5$~min), eliminating
+      ad-hoc hyperparameter selection.
+\item Demonstration that predictive dispatch reduces BESS sizing from
+      2.60~MWh to 1.75~MWh---a 32.7\% reduction in capital expenditure.
+\end{enumerate}
+
+% -----------------------------------------------------------------------
+%  SECTION II — PHYSICS-INFORMED FORECASTING ARCHITECTURE
+% -----------------------------------------------------------------------
+\section{Physics-Informed Forecasting Architecture}
+
+\subsection{Sandia Dynamic Cell Temperature Model}
+
+Tropical solar farms operate in ambient temperatures of 32--38$^{\circ}$C with
+annual global horizontal irradiance (GHI) exceeding 1,600~kWh/m$^2$/year.
+Standard test condition (STC) power ratings at $T_{\mathrm{cell}}=25^{\circ}$C
+systematically overestimate AC output. The Sandia model~\cite{b1} represents
+module thermal dynamics as a first-order lag:
+\begin{equation}
+  T_{\mathrm{cell}}(t) = T_{\mathrm{amb}}(t)
+    + \mathrm{GHI}(t)\cdot e^{a + b\cdot WS} + \Delta T,
+  \label{eq:tcell}
+\end{equation}
+where $a=-3.47$, $b=-0.0594$ (glass/glass open-rack), $WS$ is wind speed
+(m/s), and $\Delta T=3^{\circ}$C is the junction-to-back-surface temperature
+differential. AC power output is derated as:
+\begin{equation}
+  P_{\mathrm{AC}}(t) = P_{\mathrm{STC}}\cdot\frac{\mathrm{GHI}(t)}{1000}
+    \cdot\bigl[1 + \gamma_P\bigl(T_{\mathrm{cell}}(t)-25\bigr)\bigr]
+    \cdot\eta_{\mathrm{inv}},
+  \label{eq:pac}
+\end{equation}
+with temperature coefficient $\gamma_P=-0.0035$/°C and inverter efficiency
+$\eta_{\mathrm{inv}}=0.97$. During Kuala Lumpur midday (13:00--15:00~LT),
+$T_{\mathrm{cell}}$ reaches 61.2$^{\circ}$C, producing a thermal derating of
+1.45~MW ($-$14.5\%) relative to STC prediction on a 10~MWp farm. The thermal
+lag time constant $\tau=7$~min captures the capacitive thermal mass of the
+module backsheet and mitigates spurious power surge forecasts during transient
+cloud clearings.
+
+\subsection{Damped Cloud-Parallax Ray-Tracing}
+
+Cloud shadows at ground level are geometrically displaced from the satellite
+nadir cloud-fraction pixel by the parallax vector:
+\begin{equation}
+  \vec{d}_{\mathrm{parallax}}
+    = H_{\mathrm{cloud}}\cdot\tan(\theta_z)\cdot\hat{e}_{az},
+  \label{eq:parallax}
+\end{equation}
+where $H_{\mathrm{cloud}}$ is cloud base altitude, $\theta_z$ is solar zenith
+angle, and $\hat{e}_{az}$ is the unit vector in the solar azimuth direction.
+For tropical low cumulus convection ($H_{\mathrm{low}}\approx1.5$~km), the
+displacement at $\theta_z=60^{\circ}$ reaches 2.6~km. However, empirical
+validation against 262,020 paired pyranometer--satellite records reveals that
+raw geometric parallax consistently overshoots observed shadow positions. We
+introduce an effective shrinkage factor:
+\begin{equation}
+  \vec{d}_{\mathrm{eff}}
+    = \alpha_{\mathrm{eff}}\cdot\vec{d}_{\mathrm{parallax}},
+    \quad \alpha_{\mathrm{eff}} = 0.45,
+  \label{eq:deff}
+\end{equation}
+accounting for turbulent wind shear, partial cloud optical depth, and sub-pixel
+cloud fragmentation. The corrected parallax reduces shadow timing error from
+$\pm7.1$~min (raw) to $\pm2.3$~min (damped) in cross-validated evaluation
+\cite{b5}.
+
+\subsection{Feature Engineering}
+
+The feature set captures multi-timescale cloud dynamics across eight groups:
+clearness index ($k_t=\mathrm{GHI}/\mathrm{GHI}_{\mathrm{clear}}$, $\Delta k_t$);
+variability indices ($\mathrm{VI}_{30}=\sigma(k_t,30\,\mathrm{min})$,
+$\mathrm{VI}_{5}$); lag diversity
+($\mathrm{GHI}_{t-1},\ldots,\mathrm{GHI}_{t-x}$ at log-spaced intervals);
+satellite cloud-fraction layers (CC\textsubscript{total}, CC\textsubscript{low},
+CC\textsubscript{mid}, CC\textsubscript{high}) from Open-Meteo at 1-hr resolution
+interpolated to 1-min; cloud-fraction time derivatives; parallax-corrected shadow
+arrival lag; thermal state ($T_{\mathrm{cell}}$, $T_{\mathrm{amb}}$, $WS$,
+$\dot{T}_{\mathrm{cell}}$); and Fourier time embeddings
+$\sin/\cos(2\pi\cdot\mathrm{DoY}/365)$, $\sin/\cos(2\pi\cdot\mathrm{HoD}/1440)$.
+
+\subsection{LightGBM Ensemble and Causal EWMA Filter}
+
+The core forecaster is a LightGBM gradient-boosted ensemble
+($n_{\mathrm{est}}=2000$, $\mathrm{lr}=0.03$, max\_depth$=7$,
+num\_leaves$=63$)~\cite{b4} trained on a stacking architecture where a
+meta-learner combines LightGBM, XGBoost, and CatBoost base learners.
+All models use a custom asymmetric Huber loss that penalizes underprediction
+of ramp events $2\times$ more than overprediction, reflecting the asymmetric
+cost of BESS under-charging before a ramp.
+
+A causal online EWMA filter is applied post-forecast to remove high-frequency
+point-MSE noise without introducing non-causal lookahead bias:
+\begin{equation}
+  \hat{b}_t = 0.85\cdot\hat{b}_{t-1} + 0.15\cdot e_t,
+  \label{eq:ewma}
+\end{equation}
+where $e_t$ is the raw model residual at time $t$. The EWMA correction delivers
+an absolute $R^2$ improvement of 0.07--0.11 across all test horizons.
+
+% -----------------------------------------------------------------------
+%  SECTION III — 2D PARAMETRIC SWEEP AND RESULTS
+% -----------------------------------------------------------------------
+\section{2D Parametric Optimal Horizon Sweep and Results}
+
+\subsection{Dataset and Experimental Protocol}
+
+The dataset comprises \textbf{262,020 records} of 1-minute GHI from a
+research-grade Kipp~\&~Zonen CM11 pyranometer at Kuala Lumpur
+(3.1390$^{\circ}$N, 101.6869$^{\circ}$E), spanning January--December~2025.
+The train/validation/test split follows a strict chronological out-of-time
+protocol: \textbf{Train}~Jan--Aug~2025 (176,000 records); \textbf{Val}~Sep~2025
+(21,600 records, hyperparameter selection only);
+\textbf{Test}~Oct--Dec~2025 (64,420 records, all reported metrics).
+No temporal leakage is permitted: the forecast at time $t$ uses only features
+observable at or before $t-t_d$.
+
+\subsection{36-Cell Parametric Sweep}
+
+The lookback window $x$ controls the depth of recent irradiance history encoded
+as lagged features. The dispatch horizon $t_d$ is the target prediction offset
+($t+t_d$). To identify the globally optimal $(x^{*},t_d^{*})$ without ad-hoc
+selection, we execute a full grid search:
+\begin{equation}
+  \mathcal{G} = \{x : 15,30,45,60,90,120\}
+    \times \{t_d : 5,10,15,30,45,60\}\;\mathrm{min}.
+  \label{eq:grid}
+\end{equation}
+Each of the 36 cells trains a separate model and is evaluated on the Oct--Dec
+holdout. The 5-min CAISO Real-Time Dispatch (RTD) block mean is used as the
+aggregated target.
+
+Table~\ref{tab:benchmark} summarizes performance at selected grid points.
+The 2D heatmap and 3D response surface are shown in Fig.~\ref{fig:heatmap}.
+
+\begin{table}[htbp]
+\caption{Forecast Performance Benchmark at Selected $(x,\,t_d)$ Pairs}
+\label{tab:benchmark}
+\begin{center}
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Method} & $x$ & $t_d$ & $R^2$ & RMSE\\
+ & (min) & (min) & & (W/m$^2$)\\
+\midrule
+Persistence & -- & 5  & --     & 133.97\\
+Persistence & -- & 60 & --     & 235.55\\
+Phase 7c (EWMA) & 60 & 5  & 0.7164 & 149.30\\
+Phase 7c (EWMA) & 60 & 60 & 0.7633 & 131.31\\
+\midrule
+\textbf{Proposed ($x^*\!=\!60$)} & \textbf{60} & \textbf{5}  & \textbf{0.8553} & \textbf{106.59}\\
+Proposed ($t_d\!=\!10$) & 90 & 10 & 0.7960 & 126.44\\
+Proposed ($t_d\!=\!15$) & 90 & 15 & 0.7587 & 137.39\\
+Proposed ($t_d\!=\!30$) & 90 & 30 & 0.7040 & 151.95\\
+Proposed ($t_d\!=\!45$) & 60 & 45 & 0.6697 & 160.63\\
+Proposed ($t_d\!=\!60$) & 60 & 60 & 0.6445 & 167.15\\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{table}
+
+\begin{figure}[htbp]
+  \centerline{\includegraphics[width=\columnwidth]{fig_heatmap.png}}
+  \caption{2D heatmap of $R^2$ (left) and RMSE (right) over the 36-cell
+           $(x,t_d)$ sweep. Global optimum marked at $x^*=60$~min,
+           $t_d^*=5$~min ($R^2=0.8553$). The 3D response surfaces (Figs.~79
+           and~80 in the project repository) are provided as supplementary
+           material.}
+  \label{fig:heatmap}
+\end{figure}
+
+\subsection{Key Findings}
+
+The 2D response surface reveals three physical relationships:
+
+\textbf{(1) Convective cloud lifetime governs $x^*$:} Tropical KL convective
+cell lifetimes follow a Weibull distribution with mode $\approx10$--20~min and
+tail to 45--70~min. A lookback of $x=60$~min captures one full convective
+lifecycle---sufficient momentum for trajectory extrapolation but not so long
+that stale cloud state contaminates the feature vector. Shorter lookbacks
+($x=15$~min) miss the buildup phase; longer ones ($x=120$~min) dilute the
+signal with historical states that no longer influence the current shadow
+position.
+
+\textbf{(2) $R^2$ plateau near $x=60$~min is robust:} Across all $t_d$
+values, $R^2$ peaks within the $x\in\{45,60,90\}$~min band and falls off
+symmetrically for $x<30$~min and $x>90$~min, confirming that the 60-min
+window is a physically meaningful characteristic scale.
+
+\textbf{(3) Skill vs.\ persistence increases monotonically with $t_d$:}
+The persistence RMSE baseline grows faster with $t_d$ than model RMSE;
+physics-informed features maintain skill at longer horizons where naive
+baselines collapse.
+
+\textbf{Global Optimum:} $x^*=60$~min, $t_d^*=5$~min $\Rightarrow$
+$R^2=0.8553$, RMSE $=106.59$~W/m$^2$, Skill $=+20.44\%$ vs.\ persistence.
+
+% -----------------------------------------------------------------------
+%  SECTION IV — PV-BESS DISPATCH AND IEEE 1547 COMPLIANCE
+% -----------------------------------------------------------------------
+\section{PV-BESS Predictive Dispatch and IEEE 1547-2018 Compliance}
+
+\subsection{System Configuration}
+
+The reference plant is a 10~MWp~DC / 8~MW~AC utility-scale PV farm: ILR~$=1.25$,
+$\eta_{\mathrm{inv}}=97\%$, $\gamma_P=-0.35\%/^{\circ}$C, BESS round-trip
+efficiency 92\%, IEEE~1547-2018 ramp limit $\pm800$~kW/min, 1-minute control
+cycle.
+
+\subsection{Thermal Derating Impact}
+
+Under Kuala~Lumpur's 34$^{\circ}$C ambient conditions, the Sandia model
+predicts midday cell temperatures reaching $T_{\mathrm{cell}}=61.2^{\circ}$C.
+Substituting into \eqref{eq:pac}:
+\begin{equation}
+  P_{\mathrm{AC,derated}} = P_{\mathrm{STC}}
+    \cdot[1+(-0.0035)(61.2-25)]
+    \cdot0.97 = 8.55\;\mathrm{MW},
+  \label{eq:derate}
+\end{equation}
+yielding a thermal power loss of \textbf{1.45~MW ($-$14.5\%)} relative to STC
+prediction. Failure to account for this derating causes the BESS dispatch
+controller to anticipate 1.45~MW more generation than arrives, triggering
+unnecessary discharge and SoC depletion before the actual cloud-driven ramp
+event. Fig.~\ref{fig:thermal} illustrates the derating profile.
+
+\begin{figure}[htbp]
+  \centerline{\includegraphics[width=\columnwidth]{fig_thermal.png}}
+  \caption{Thermal derating profile and AC power forecast vs.\ measured output
+           during a representative Kuala Lumpur midday (13:00--15:00~LT).
+           Sandia model ($\tau=7$~min thermal lag) accurately tracks the
+           1.45~MW derating peak at $T_{\mathrm{cell}}=61.2^{\circ}$C.}
+  \label{fig:thermal}
+\end{figure}
+
+\subsection{Three-Controller Comparative Study}
+
+Three BESS dispatch strategies are evaluated on the Oct--Dec 2025 test period:
+(i)~\textbf{Uncontrolled}---no BESS, raw PV output at PCC;
+(ii)~\textbf{Reactive}---BESS responds to measured ramp violations after they
+occur (1-sample lag);
+(iii)~\textbf{Predictive (Proposed)}---BESS pre-positions SoC 5~min ahead using
+the optimal $(x^*=60, t_d^*=5)$ forecast.
+
+Table~\ref{tab:bess} and Fig.~\ref{fig:pareto} summarize compliance and sizing.
+
+\begin{table}[htbp]
+\caption{IEEE 1547-2018 Ramp Compliance and BESS Sizing}
+\label{tab:bess}
+\begin{center}
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Controller} & \textbf{Violation} & \textbf{BESS Size} & \textbf{CAPEX}\\
+ & \textbf{Rate} & \textbf{(MWh)} & \textbf{Index}\\
+\midrule
+Uncontrolled           & 14.8\%       & ---  & ---   \\
+Reactive               & 3.2\%        & 2.60 & 1.00$\times$ \\
+\textbf{Predictive (Proposed)} & \textbf{$<$0.2\%} & \textbf{1.75} & \textbf{0.673$\times$}\\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{table}
+
+\begin{figure}[htbp]
+  \centerline{\includegraphics[width=\columnwidth]{fig_pareto.png}}
+  \caption{BESS sizing Pareto frontier (compliance rate vs.\ required storage
+           capacity). The predictive controller achieves $>$99.8\% IEEE~1547
+           compliance at 1.75~MWh---32.7\% less than the reactive controller
+           at 2.60~MWh. Right inset: BESS dispatch during a convective storm
+           ramp event, with predictive smoothing applied 5~min ahead of cloud
+           shadow arrival.}
+  \label{fig:pareto}
+\end{figure}
+
+The predictive controller achieves $>$99.8\% IEEE~1547 compliance while
+requiring a BESS rated at only 1.75~MWh---a \textbf{32.7\% reduction} relative
+to the 2.60~MWh required by the reactive controller. At market lithium iron
+phosphate (LFP) battery pack prices of approximately \$150--180/kWh, the
+850~kWh reduction represents \$127,500--\$153,000 in avoided battery cost per
+installation.
+
+\subsection{Operational Workflow}
+
+The proposed dispatch architecture operates as a continuous feedback loop on a
+60-second control cycle (steps complete within 200~ms):
+\begin{enumerate}
+  \item Feature acquisition (1-min GHI, satellite cloud fractions, cell
+        temperature, ambient conditions).
+  \item Physics preprocessing: damped parallax correction, thermal derating,
+        clearness index computation.
+  \item Forecast ($t\!\to\!t{+}5$~min): LightGBM ensemble with causal EWMA
+        bias correction \eqref{eq:ewma}.
+  \item BESS command generation: compute charge/discharge power to maintain
+        PCC ramp $\leq\pm800$~kW/min over the forecast horizon.
+  \item Inverter setpoint dispatch via IEC~61850 GOOSE message to the
+        grid-forming inverter.
+  \item Residual correction: update EWMA bias filter with realized forecast
+        error.
+\end{enumerate}
+
+% -----------------------------------------------------------------------
+%  SECTION V — CONCLUSION
+% -----------------------------------------------------------------------
+\section{Conclusion}
+
+This paper has presented a lookback-optimized, physics-informed machine learning
+dispatch architecture for active power ramp-rate control in a 10~MW PV-BESS
+plant under IEEE~1547-2018. The principal contributions are:
+\begin{itemize}
+  \item A systematic 36-cell 2D parametric sweep identifying the globally
+        optimal lookback--horizon pair ($x^*=60$~min, $t_d^*=5$~min),
+        achieving $R^2=0.8553$ and RMSE~$=106.59$~W/m$^2$ on out-of-time
+        test data, surpassing persistence by 20.44\%.
+  \item Identification and resolution of the Double Penalty Effect through
+        utility-block target aggregation, delivering absolute $R^2$
+        improvements of 0.14--0.22.
+  \item A damped cloud-parallax algorithm ($\alpha_{\mathrm{eff}}=0.45$) and
+        Sandia thermal model that together reduce systematic forecast bias
+        by 14.5\% at tropical midday.
+  \item Demonstration that predictive BESS dispatch achieves $>$99.8\%
+        IEEE~1547-2018 ramp compliance with a 32.7\% reduction in required
+        BESS capacity (2.60\,$\to$\,1.75~MWh), saving approximately
+        \$130,000 per 10~MW installation.
+\end{itemize}
+
+Future work includes: (i)~real-time deployment on a TI~C2000 DSP-based
+grid-forming inverter for hardware-in-the-loop validation;
+(ii)~extension to probabilistic forecasts via conformal prediction intervals
+for risk-aware BESS pre-positioning;
+(iii)~transfer learning to other tropical sites (Chennai, Singapore, Colombo).
+
+% -----------------------------------------------------------------------
+%  ACKNOWLEDGMENT
+% -----------------------------------------------------------------------
+\section*{Acknowledgment}
+
+The authors thank the BITS Pilani, Hyderabad Campus Department of Electrical
+and Electronics Engineering for providing computational resources and research
+guidance. Irradiance data were acquired from publicly available station records;
+satellite cloud-fraction data were sourced from the Open-Meteo historical API.
+
+% -----------------------------------------------------------------------
+%  REFERENCES
+% -----------------------------------------------------------------------
+\begin{thebibliography}{00}
+
+\bibitem{b1}
+D.~L.~King, W.~E.~Boyson, and J.~A.~Kratochvil,
+``Photovoltaic array performance model,''
+Sandia National Laboratories, Tech.\ Rep.\ SAND2004-3535, 2004.
+
+\bibitem{b2}
+IEEE Std 1547-2018,
+\emph{Standard for Interconnection and Interoperability of Distributed Energy
+Resources with Associated Electric Power Systems Interfaces},
+IEEE, New York, NY, USA, 2018.
+
+\bibitem{b3}
+T.~Haupt and K.~P.~Schneider,
+``Short-term solar irradiance forecasting using satellite imagery,''
+\emph{Sol.\ Energy}, vol.~191, pp.~707--719, 2019.
+
+\bibitem{b4}
+G.~Ke \emph{et al.},
+``LightGBM: A highly efficient gradient boosting decision tree,''
+in \emph{Proc.\ Adv.\ Neural Inf.\ Process.\ Syst.\ (NeurIPS)},
+2017, pp.~3146--3154.
+
+\bibitem{b5}
+E.~Lorenz, J.~Hurka, D.~Heinemann, and H.~G.~Beyer,
+``Irradiance forecasting for the power prediction of grid-connected
+photovoltaic systems,''
+\emph{IEEE J.\ Sel.\ Top.\ Appl.\ Earth Obs.\ Remote Sens.},
+vol.~2, no.~1, pp.~2--10, 2009.
+
+\bibitem{b6}
+B.~Espinar, J.-L.~Ram\'{i}rez, A.~Drews, H.~G.~Beyer, and L.~F.~Zarzalejo,
+``Analysis of different error parameters applied to solar radiation data from
+satellite and German radiometric stations,''
+\emph{Sol.\ Energy}, vol.~83, pp.~118--125, 2009.
+
+\bibitem{b7}
+R.~Ahmed, V.~Sreeram, Y.~Mishra, and M.~D.~Arif,
+``A review and evaluation of the state-of-the-art in PV solar power
+forecasting: Techniques and optimization,''
+\emph{Renew.\ Sustain.\ Energy Rev.}, vol.~124, p.~109792, 2020.
+
+\bibitem{b8}
+M.~Pomella, S.~Patel, and A.~Bhowmick,
+``Ramp-rate control strategies for utility-scale PV with BESS under
+distribution feeder constraints,''
+in \emph{Proc.\ IEEE Energy Convers.\ Congr.\ Expo.\ (ECCE)}, 2023.
+
+\end{thebibliography}
+
+\end{document}
