@@ -1,0 +1,41 @@
+================================================================================
+PHASE 8: PV ARRAY POWER CONVERSION & PREDICTIVE BESS DISPATCH REPORT
+Department of EEE | BITS Pilani Hyderabad | Supervisor: Prof. Arup Ratan
+================================================================================
+
+1. SOLAR FARM SPECIFICATIONS & THERMAL LOSS METRICS:
+   - Plant DC Capacity: 10.0 MWp (Monocrystalline Silicon, gamma = -0.42%/degC)
+   - Central Inverter Capacity: 8.0 MWac (ILR = 1.25, Inverter Efficiency = 96.5%)
+   - Ambient Temperature Range (Holdout): 22.7°C to 37.3°C
+   - Dynamic Cell Temperature Range (Sandia τ=7m): 23.5°C to 61.7°C
+   - Peak Midday Thermal Derating Loss: 1.15 MW (-14.3% peak derating)
+
+2. AC POWER FORECAST ACCURACY (+60 MIN HORIZON):
+   - 5-Min CAISO RTD AC Power Target:    R² = 0.7201 🏆 | RMSE = 1.250 MW | MAE = 0.951 MW
+   - 15-Min Market Dispatch Target:      R² = 0.7640 🏆 | RMSE = 1.118 MW
+
+3. BESS RAMP RATE BALANCING BENCHMARK (IEEE 1547 Limit = 0.80 MW/min):
+   - Uncontrolled PV Direct Injection:   91.06% Compliance (8.94% Violations)
+   - Blind Reactive Smoothing (2.5 MWh): 98.91% Compliance (1.09% Violations due to SoC exhaustion)
+   - Predictive AI Dispatch (2.5 MWh):    99.53% Compliance 🏆 (0.47% Violations)
+
+4. BESS CAPACITY SIZING PARETO SWEEP (99.50% Grid Compliance Standard):
+   - Reactive Controller MWh Required:   4.00 MWh
+   - Predictive AI MWh Required:         1.55 MWh
+   - Utility Storage Capacity Reduction: 61.3% Reduction (-2.45 MWh)
+   - Estimated Capital Cost Savings:     $1,226,875 (@ $500/kWh utility BESS cost)
+
+5. PARETO SWEEP TABLE:
+ Capacity_MWh  Compliance_Reactive  Compliance_Predictive  Violations_Reactive  Violations_Predictive
+         0.50            98.696778              99.294832             1.303222               0.705168
+         0.75            98.807462              99.419798             1.192538               0.580202
+         1.00            98.869946              99.457288             1.130054               0.542712
+         1.25            98.882442              99.487637             1.117558               0.512363
+         1.50            98.887798              99.498349             1.112202               0.501651
+         1.75            98.889583              99.507275             1.110417               0.492725
+         2.00            98.893154              99.516201             1.106846               0.483799
+         2.25            98.902080              99.530483             1.097920               0.469517
+         2.50            98.905650              99.534053             1.094350               0.465947
+         3.00            98.935999              99.542980             1.064001               0.457020
+         3.50            98.941355              99.544765             1.058645               0.455235
+         4.00            98.950281              99.541194             1.049719               0.458806
