@@ -375,11 +375,19 @@ for name, tgt_col, clr_col in targets:
     alpha_ewma = 0.15
     gamma_corr = 0.25
     
+    # td_steps: number of prediction steps before the target arrives.
+    # At time i (predicting t+td), y_te[i] only arrives at step i+td.
+    # We use the causal error from td_steps ago instead.
+    # For Phase 7c the horizon is t+60, so td_steps=60.
+    TD_STEPS = 60
     for i in range(len(raw_pred)):
-        # Apply current estimated bias to future prediction
+        # Apply current estimated bias to future prediction (causal)
         ewma_pred[i] = np.clip(raw_pred[i] + gamma_corr * bias_t, 0.0, 1.25 * clr_target[i])
-        # Update running bias when observation arrives
-        err_now = y_te[i] - raw_pred[i]
+        # Update bias using error that is NOW observable (from td_steps ago)
+        if i >= TD_STEPS:
+            err_now = y_te[i - TD_STEPS] - raw_pred[i - TD_STEPS]
+        else:
+            err_now = 0.0
         bias_t = (1.0 - alpha_ewma) * bias_t + alpha_ewma * err_now
     
     # Compute Metrics for Raw Model

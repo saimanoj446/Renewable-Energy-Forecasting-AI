@@ -515,13 +515,14 @@ raw_15m, lgb_15m = train_ensemble(X_train, y_train_15m,
 # =============================================================================
 print("\n[7/8] Applying Quantile-Aware Adaptive EWMA causal filter...")
 
-def adaptive_ewma(raw_pred, y_true, clr_ceiling, kt_arr):
+def adaptive_ewma(raw_pred, y_true, clr_ceiling, kt_arr, td_steps=5):
     """
-    Maintains two separate EWMA bias accumulators:
-      • b_high for high-clearness regime (kt > 0.75) — small, stable bias
-      • b_low  for low/cloudy regime  (kt < 0.35) — larger, noisier bias
-      • b_mid  for the transition regime
-    γ_corr is set dynamically based on how wide the variance of recent errors is.
+    CAUSAL adaptive EWMA bias correction.
+    At prediction time i (predicting t+td), the actual y_true[i] does not
+    arrive until td_steps later. We update the bias using the error from
+    td_steps ago: err = y_true[i-td_steps] - raw_pred[i-td_steps],
+    which IS observable at time i. For i < td_steps, no bias update is applied.
+    Maintains three EWMA accumulators split by sky regime (kt threshold).
     """
     n = len(raw_pred)
     out = np.zeros(n)
@@ -551,8 +552,11 @@ def adaptive_ewma(raw_pred, y_true, clr_ceiling, kt_arr):
 
         out[i] = np.clip(raw_pred[i] + gamma * b, 0.0, 1.25 * clr_ceiling[i])
 
-        # Update bias accumulators
-        err = y_true[i] - raw_pred[i]
+        # Update bias accumulators using CAUSAL error (from td_steps ago)
+        if i >= td_steps:
+            err = y_true[i - td_steps] - raw_pred[i - td_steps]
+        else:
+            err = 0.0  # No data yet — keep bias at 0
         err_hist.append(err)
         if kt_now > 0.75:
             b_high = (1 - alpha_ewma) * b_high + alpha_ewma * err
@@ -566,8 +570,8 @@ def adaptive_ewma(raw_pred, y_true, clr_ceiling, kt_arr):
 
     return out
 
-ewma_5m  = adaptive_ewma(raw_5m,  y_test_5m,  clr_5m_test,  kt_test)
-ewma_15m = adaptive_ewma(raw_15m, y_test_15m, clr_15m_test, kt_test)
+ewma_5m  = adaptive_ewma(raw_5m,  y_test_5m,  clr_5m_test,  kt_test,  td_steps=5)
+ewma_15m = adaptive_ewma(raw_15m, y_test_15m, clr_15m_test, kt_test, td_steps=15)
 
 # --- Persistence benchmarks (identical targets)
 pers_rmse_5m  = np.sqrt(mean_squared_error(y_test_5m,  kt_test * clr_5m_test))
@@ -679,7 +683,7 @@ for td in HORIZONS:
         m.fit(Xtr, ytr, eval_set=[(Xva, yva)],
               callbacks=[lgb.early_stopping(30, verbose=False)])
         raw_p = np.clip(m.predict(Xte), 0, 1.25 * clr_te)
-        ewma_p = adaptive_ewma(raw_p, yte, clr_te, kt_te)
+        ewma_p = adaptive_ewma(raw_p, yte, clr_te, kt_te, td_steps=td)
 
         y_pers = kt_te * clr_te
         rmse_pers = np.sqrt(mean_squared_error(yte, y_pers))
