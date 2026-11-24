@@ -67,13 +67,11 @@ system (BESS) capital sizing requirements by 32.7\%. A systematic 36-cell
 two-dimensional parametric sweep over lookback window
 $x \in \{15,30,45,60,90,120\}$~min and dispatch horizon
 $t_d \in \{5,10,15,30,45,60\}$~min identifies a global optimum at
-$x^{*}=60$~min, $t_d^{*}=5$~min, achieving $R^2=0.8553$ and
-RMSE~$=106.59$~W/m$^2$ on an out-of-time holdout (Oct--Dec 2025) using
+$x^{*}=45$~min, $t_d^{*}=5$~min, achieving $R^2=0.8424$ and
+RMSE~$=111.26$~W/m$^2$ on an out-of-time holdout (Oct--Dec 2025) using
 262,020 records of 1-minute ground pyranometer irradiance from Kuala Lumpur,
 Malaysia. Physical innovations include a Sandia dynamic cell-temperature model,
-damped cloud-parallax ray-tracing ($\alpha_{\mathrm{eff}}=0.45$), and a causal
-online exponentially-weighted moving-average (EWMA) filter that resolves the
-Double Penalty Effect inherent in point-MSE optimization. The predictive
+damped cloud-parallax ray-tracing ($\alpha_{\mathrm{eff}}=0.45$), and a strictly causal EWMA filter with a \$-step lag buffer that resolves the Double Penalty Effect. The predictive
 dispatch strategy reduces required BESS capacity from 2.60~MWh to 1.75~MWh---a
 direct 32.7\% capital expenditure reduction.
 \end{abstract}
@@ -138,7 +136,7 @@ The contributions of this work are:
       aggregation (5-min and 15-min rolling means), unlocking $R^2$ gains of
       0.14--0.22 absolute over 1-min point targets.
 \item A 36-cell 2D parametric sweep that identifies the globally optimal
-      lookback--horizon pair ($x^{*}=60$~min, $t_d^{*}=5$~min), eliminating
+      lookback--horizon pair ($x^{*}=45$~min, $t_d^{*}=5$~min), eliminating
       ad-hoc hyperparameter selection.
 \item Demonstration that predictive dispatch reduces BESS sizing from
       2.60~MWh to 1.75~MWh---a 32.7\% reduction in capital expenditure.
@@ -288,7 +286,7 @@ Persistence & -- & 60 & --     & 235.55\\
 Phase 7c (EWMA) & 60 & 5  & 0.7164 & 149.30\\
 Phase 7c (EWMA) & 60 & 60 & 0.7633 & 131.31\\
 \midrule
-\textbf{Proposed ($x^*\!=\!60$)} & \textbf{60} & \textbf{5}  & \textbf{0.8553} & \textbf{106.59}\\
+\textbf{Proposed ($x^*\!=\!60$)} & \textbf{60} & \textbf{5}  & \textbf{0.8424} & \textbf{111.26}\\
 Proposed ($t_d\!=\!10$) & 90 & 10 & 0.7960 & 126.44\\
 Proposed ($t_d\!=\!15$) & 90 & 15 & 0.7587 & 137.39\\
 Proposed ($t_d\!=\!30$) & 90 & 30 & 0.7040 & 151.95\\
@@ -302,8 +300,8 @@ Proposed ($t_d\!=\!60$) & 60 & 60 & 0.6445 & 167.15\\
 \begin{figure}[htbp]
   \centerline{\includegraphics[width=\columnwidth]{fig_heatmap.png}}
   \caption{2D heatmap of $R^2$ (left) and RMSE (right) over the 36-cell
-           $(x,t_d)$ sweep. Global optimum marked at $x^*=60$~min,
-           $t_d^*=5$~min ($R^2=0.8553$). The 3D response surfaces (Figs.~79
+           $(x,t_d)$ sweep. Global optimum marked at $x^*=45$~min,
+           $t_d^*=5$~min ($R^2=0.8424$). The 3D response surfaces (Figs.~79
            and~80 in the project repository) are provided as supplementary
            material.}
   \label{fig:heatmap}
@@ -332,8 +330,8 @@ The persistence RMSE baseline grows faster with $t_d$ than model RMSE;
 physics-informed features maintain skill at longer horizons where naive
 baselines collapse.
 
-\textbf{Global Optimum:} $x^*=60$~min, $t_d^*=5$~min $\Rightarrow$
-$R^2=0.8553$, RMSE $=106.59$~W/m$^2$, Skill $=+20.44\%$ vs.\ persistence.
+\textbf{Global Optimum:} $x^*=45$~min, $t_d^*=5$~min $\Rightarrow$
+$R^2=0.8424$, RMSE $=111.26$~W/m$^2$, Skill $=+16.95\%$ vs.\ persistence.
 
 % -----------------------------------------------------------------------
 %  SECTION IV — PV-BESS DISPATCH AND IEEE 1547 COMPLIANCE
@@ -380,7 +378,7 @@ Three BESS dispatch strategies are evaluated on the Oct--Dec 2025 test period:
 (ii)~\textbf{Reactive}---BESS responds to measured ramp violations after they
 occur (1-sample lag);
 (iii)~\textbf{Predictive (Proposed)}---BESS pre-positions SoC 5~min ahead using
-the optimal $(x^*=60, t_d^*=5)$ forecast.
+the optimal $(x^*=45, t_d^*=5)$ forecast.
 
 Table~\ref{tab:bess} and Fig.~\ref{fig:pareto} summarize compliance and sizing.
 
@@ -449,9 +447,9 @@ dispatch architecture for active power ramp-rate control in a 10~MW PV-BESS
 plant under IEEE~1547-2018. The principal contributions are:
 \begin{itemize}
   \item A systematic 36-cell 2D parametric sweep identifying the globally
-        optimal lookback--horizon pair ($x^*=60$~min, $t_d^*=5$~min),
-        achieving $R^2=0.8553$ and RMSE~$=106.59$~W/m$^2$ on out-of-time
-        test data, surpassing persistence by 20.44\%.
+        optimal lookback--horizon pair ($x^*=45$~min, $t_d^*=5$~min),
+        achieving $R^2=0.8424$ and RMSE~$=111.26$~W/m$^2$ on out-of-time
+        test data, surpassing persistence by 16.95\%.
   \item Identification and resolution of the Double Penalty Effect through
         utility-block target aggregation, delivering absolute $R^2$
         improvements of 0.14--0.22.
