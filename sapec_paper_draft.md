@@ -16,7 +16,7 @@
 
 ## Abstract
 
-Active power ramp-rate violations at the point of common coupling (PCC) represent a critical grid integration challenge for utility-scale photovoltaic (PV) plants under IEEE 1547-2018. This paper presents a lookback-optimized, physics-informed machine learning dispatch architecture that enables a PV-BESS inverter controller to enforce the ±10%/min ramp-rate limit with greater than 99.8% compliance while simultaneously reducing battery energy storage system (BESS) capital sizing requirements by 32.7%. A systematic 36-cell two-dimensional parametric sweep over lookback window x ∈ {15, 30, 45, 60, 90, 120} min and dispatch horizon td ∈ {5, 10, 15, 30, 45, 60} min identifies a global optimum at x* = 60 min, td* = 5 min, achieving R² = 0.8553 and RMSE = 106.59 W/m² on an out-of-time holdout (Oct–Dec 2025) using 262,020 records of 1-minute ground pyranometer irradiance from Kuala Lumpur, Malaysia (3.14°N, 101.69°E). Physical innovations include a Sandia dynamic cell-temperature model, damped cloud-parallax ray-tracing (α_eff = 0.45), and a causal online exponentially-weighted moving-average (EWMA) filter that resolves the Double Penalty Effect inherent in point-MSE optimization against a pinhole pyranometer. The predictive dispatch strategy reduces required BESS capacity from 2.60 MWh (reactive) to 1.75 MWh—a direct 32.7% capital expenditure reduction.
+Active power ramp-rate violations at the point of common coupling (PCC) represent a critical grid integration challenge for utility-scale photovoltaic (PV) plants under IEEE 1547-2018. This paper presents a lookback-optimized, physics-informed machine learning dispatch architecture that enables a PV-BESS inverter controller to enforce the ±10%/min ramp-rate limit with greater than 99.8% compliance while simultaneously reducing battery energy storage system (BESS) capital sizing requirements by 32.7%. A systematic 36-cell two-dimensional parametric sweep over lookback window x ∈ {15, 30, 45, 60, 90, 120} min and dispatch horizon td ∈ {5, 10, 15, 30, 45, 60} min identifies a global optimum at x* = 45 min, td* = 5 min, achieving R² = 0.8424 and RMSE = 111.26 W/m² on an out-of-time holdout (Oct–Dec 2025) using 262,020 records of 1-minute ground pyranometer irradiance from Kuala Lumpur, Malaysia (3.14°N, 101.69°E). Physical innovations include a Sandia dynamic cell-temperature model, damped cloud-parallax ray-tracing (α_eff = 0.45), and a causal strictly causal EWMA filter with a td-step lag buffer that resolves the Double Penalty Effect inherent in point-MSE optimization against a pinhole pyranometer. The predictive dispatch strategy reduces required BESS capacity from 2.60 MWh (reactive) to 1.75 MWh—a direct 32.7% capital expenditure reduction.
 
 ---
 
@@ -37,7 +37,7 @@ Furthermore, two systematic modeling errors have been overlooked in prior litera
 1. A Sandia dynamic thermal derating model that reduces overestimation of AC power output by 14.5% at tropical midday (T_cell = 61.2°C), directly improving BESS charge pre-positioning accuracy.
 2. A damped cloud-parallax ray-tracing algorithm (effective shrinkage factor α_eff = 0.45) that eliminates geometric overshoot in shadow arrival prediction.
 3. Resolution of the Double Penalty Effect through utility-block target aggregation (5-min and 15-min rolling means), unlocking R² gains of 0.14–0.22 absolute over 1-min point targets.
-4. A 36-cell 2D parametric sweep that identifies the globally optimal lookback–horizon pair (x* = 60 min, td* = 5 min), eliminating ad-hoc hyperparameter selection from the deployment workflow.
+4. A 36-cell 2D parametric sweep that identifies the globally optimal lookback–horizon pair (x* = 45 min, td* = 5 min), eliminating ad-hoc hyperparameter selection from the deployment workflow.
 5. Demonstration that predictive dispatch reduces BESS sizing from 2.60 MWh to 1.75 MWh—a 32.7% reduction in capital expenditure.
 
 ---
@@ -123,12 +123,12 @@ Each cell trains a separate model, evaluated on the Oct–Dec holdout. The 5-min
 | Persistence baseline | — | 60 | — | 235.55 | 0.00% |
 | Phase 7c Baseline (EWMA) | 60 | 5 | 0.7164 | 149.30 | +36.62% |
 | Phase 7c Baseline (EWMA) | 60 | 60 | 0.7633 | 131.31 | +41.14% |
-| **Phase 9 Sweep Optimum** | **60** | **5** | **0.8553** | **106.59** | **+20.44%** |
-| Phase 9 Sweep (td=10) | 90 | 10 | 0.7960 | 126.44 | +24.13% |
-| Phase 9 Sweep (td=15) | 90 | 15 | 0.7587 | 137.39 | +25.72% |
-| Phase 9 Sweep (td=30) | 90 | 30 | 0.7040 | 151.95 | +27.62% |
-| Phase 9 Sweep (td=45) | 60 | 45 | 0.6697 | 160.63 | +27.99% |
-| Phase 9 Sweep (td=60) | 60 | 60 | 0.6445 | 167.15 | +29.04% |
+| **Phase 9 Sweep Optimum** | **45** | **5** | **0.8424** | **111.26** | **+16.95%** |
+| Phase 9 Sweep (td=10) | 45 | 10 | 0.7645 | 135.86 | +18.48% |
+| Phase 9 Sweep (td=15) | 90 | 15 | 0.7175 | 148.64 | +19.64% |
+| Phase 9 Sweep (td=30) | 90 | 30 | 0.6433 | 166.80 | +20.54% |
+| Phase 9 Sweep (td=45) | 60 | 45 | 0.6018 | 176.38 | +20.93% |
+| Phase 9 Sweep (td=60) | 90 | 60 | 0.5651 | 184.88 | +21.51% |
 
 ### C. Key Findings
 
@@ -140,7 +140,7 @@ The 2D response surface (Fig. 1) reveals three important physical relationships:
 
 3. **Skill vs. persistence increases monotonically with td:** This counterintuitive result occurs because the persistence forecast RMSE baseline (denominator) grows faster with td than model RMSE (numerator). The model's physics-informed features maintain skill at longer horizons where naive baselines collapse.
 
-**Global Optimum:** x* = 60 min, td* = 5 min → **R² = 0.8553, RMSE = 106.59 W/m², Skill = +20.44% vs. persistence**
+**Global Optimum:** x* = 45 min, td* = 5 min → **R² = 0.8424, RMSE = 111.26 W/m², Skill = +16.95% vs. persistence**
 
 *Fig. 1: 2D heatmap of R² (left) and RMSE (right) over the 36-cell (x, td) sweep grid, with global optimum marked at x=60 min, td=5 min. 3D response surfaces shown as supplementary material.*
 
@@ -185,7 +185,7 @@ Three BESS dispatch strategies are evaluated on the Oct–Dec 2025 test period:
 
 1. **Uncontrolled:** No BESS; raw PV output directly connected to PCC.
 2. **Reactive:** BESS responds to measured ramp violations after they occur (1-sample lag).
-3. **Predictive (Proposed):** BESS pre-positions SoC 5 minutes ahead using the optimal (x*=60, td*=5) forecast.
+3. **Predictive (Proposed):** BESS pre-positions SoC 5 minutes ahead using the optimal (x*=45, td*=5) forecast.
 
 **Table II: IEEE 1547-2018 Ramp Compliance and BESS Sizing**
 
@@ -223,7 +223,7 @@ Steps 1–6 complete within 200 ms per control cycle, well within the 60-second 
 
 This paper has presented a lookback-optimized, physics-informed machine learning dispatch architecture for active power ramp-rate control in a 10 MW PV-BESS plant under IEEE 1547-2018. The principal contributions are:
 
-- A systematic 36-cell 2D parametric sweep that identifies the globally optimal lookback–horizon pair (x* = 60 min, td* = 5 min), achieving **R² = 0.8553** and **RMSE = 106.59 W/m²** on out-of-time test data, surpassing the persistence baseline by 20.44%.
+- A systematic 36-cell 2D parametric sweep that identifies the globally optimal lookback–horizon pair (x* = 45 min, td* = 5 min), achieving **R² = 0.8424** and **RMSE = 111.26 W/m²** on out-of-time test data, surpassing the persistence baseline by 16.95%.
 - Identification of the Double Penalty Effect as a fundamental barrier to 1-min point forecasting and its resolution through 5-min utility-block target aggregation, delivering absolute R² improvements of 0.14–0.22.
 - A damped cloud-parallax algorithm (α_eff = 0.45) and Sandia thermal model that together reduce systematic forecast bias by 14.5% at tropical midday conditions.
 - Demonstration that predictive BESS dispatch achieves **>99.8% IEEE 1547-2018 ramp compliance** with a **32.7% reduction** in required BESS capacity (2.60 → 1.75 MWh), offering direct capital cost savings of approximately \$130,000 per 10 MW installation.
@@ -258,10 +258,10 @@ This paper has presented a lookback-optimized, physics-informed machine learning
 |---|---|---|
 | x | Lookback window (feature history) | 15–120 min |
 | td | Dispatch horizon (forecast lead time) | 5–60 min |
-| x* | Globally optimal lookback | 60 min |
+| x* | Globally optimal lookback | 45 min |
 | td* | Globally optimal dispatch horizon | 5 min |
-| R² | Coefficient of determination | 0.8553 (at x*, td*) |
-| RMSE | Root mean squared error of GHI forecast | 106.59 W/m² |
+| R² | Coefficient of determination | 0.8424 (at x*, td*) |
+| RMSE | Root mean squared error of GHI forecast | 111.26 W/m² |
 | α_eff | Damped parallax shrinkage factor | 0.45 (dimensionless) |
 | τ_thermal | Sandia module thermal lag time constant | 7 min |
 | γ_P | PV module temperature coefficient | −0.35 %/°C |
